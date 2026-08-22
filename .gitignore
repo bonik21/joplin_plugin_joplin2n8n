@@ -1,3 +1,8 @@
+# Joplin Plugin Build Artifacts
+dist/
+publish/
+*.jpl
+
 # Logs
 logs
 *.log

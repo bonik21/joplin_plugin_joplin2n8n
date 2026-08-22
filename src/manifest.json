@@ -1,0 +1,16 @@
+{
+	"manifest_version": 1,
+	"id": "com.bonik.joplin2n8n",
+	"app_min_version": "3.7",
+	"version": "1.0.0",
+	"name": "Joplin to n8n",
+	"description": "Export and send Joplin notes to n8n webhooks",
+	"author": "BoniK",
+	"homepage_url": "https://github.com/bonik21/joplin_plugin_joplin2n8n",
+	"repository_url": "https://github.com/bonik21/joplin_plugin_joplin2n8n",
+	"keywords": [],
+	"categories": [],
+	"screenshots": [],
+	"icons": {},
+	"promo_tile": {}
+}
