@@ -28,6 +28,9 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         responseStatus: _('responseStatus'),
         responseText: _('responseText'),
         responseHtml: _('responseHtml'),
+        attachmentHandling: _('attachmentHandling'),
+        attachmentKeepId: _('attachmentKeepId'),
+        attachmentReplaceName: _('attachmentReplaceName'),
         delete: _('delete'),
     };
     

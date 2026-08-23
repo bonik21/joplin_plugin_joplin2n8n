@@ -11,6 +11,7 @@ export interface Webhook {
     basicPass?: string;
     headerAuth?: string;
     responseHandling: 'status' | 'text' | 'html';
+    attachmentHandling: 'keep_id' | 'replace_name';
 }
 
 export async function registerSettings(onOpenManager?: () => Promise<void>) {

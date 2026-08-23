@@ -1,6 +1,32 @@
 import joplin from 'api';
 import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { initI18n, _ } from './i18n';
+const fs = joplin.require('fs-extra');
+
+function buildMultipartFormData(boundary: string, fields: Record<string, string>, files: { name: string, filename: string, buffer: Buffer, mime: string }[]): Buffer {
+    const buffers: Buffer[] = [];
+    
+    // Add text fields
+    for (const [key, value] of Object.entries(fields)) {
+        buffers.push(Buffer.from(`--${boundary}\r\n`));
+        buffers.push(Buffer.from(`Content-Disposition: form-data; name="${key}"\r\n\r\n`));
+        buffers.push(Buffer.from(`${value}\r\n`));
+    }
+    
+    // Add files
+    for (const file of files) {
+        buffers.push(Buffer.from(`--${boundary}\r\n`));
+        buffers.push(Buffer.from(`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n`));
+        buffers.push(Buffer.from(`Content-Type: ${file.mime}\r\n\r\n`));
+        buffers.push(file.buffer);
+        buffers.push(Buffer.from(`\r\n`));
+    }
+    
+    // End boundary
+    buffers.push(Buffer.from(`--${boundary}--\r\n`));
+    
+    return Buffer.concat(buffers);
+}
 import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
 
@@ -15,9 +41,7 @@ async function executeWebhook(webhook: Webhook) {
     }
 
     try {
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
+        const headers: Record<string, string> = {};
 
         if (webhook.authType === 'basic' && webhook.basicUser && webhook.basicPass) {
             const authString = Buffer.from(`${webhook.basicUser}:${webhook.basicPass}`).toString('base64');
@@ -26,10 +50,61 @@ async function executeWebhook(webhook: Webhook) {
             headers['Authorization'] = webhook.headerAuth;
         }
 
+        // Extract resources
+        const resourceRegex = /\(:\/([a-f0-9]{32})\)/gi;
+        const resourceIds = new Set<string>();
+        let match;
+        while ((match = resourceRegex.exec(note.body)) !== null) {
+            resourceIds.add(match[1]);
+        }
+
+        const files: { name: string, filename: string, buffer: Buffer, mime: string }[] = [];
+        let modifiedBody = note.body;
+
+        for (const id of resourceIds) {
+            try {
+                const resource = await joplin.data.get(['resources', id], { fields: ['id', 'title', 'mime'] });
+                const filePath = await joplin.data.resourcePath(id);
+                const buffer = await fs.readFile(filePath);
+                
+                const filename = resource.title || id;
+                files.push({
+                    name: id,
+                    filename: filename,
+                    buffer: buffer,
+                    mime: resource.mime || 'application/octet-stream'
+                });
+                
+                if (webhook.attachmentHandling === 'replace_name') {
+                    // Replace Markdown link ID with filename
+                    const replaceRegex = new RegExp(`\\(:\\/${id}\\)`, 'g');
+                    modifiedBody = modifiedBody.replace(replaceRegex, `(${filename})`);
+                }
+            } catch (e) {
+                console.warn(`Could not load resource ${id}`, e);
+            }
+        }
+
+        note.body = modifiedBody;
+
+        const boundary = '----Joplin2n8nBoundary' + Math.random().toString(16).substring(2);
+        headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
+
+        const fields: Record<string, string> = {};
+        for (const [key, value] of Object.entries(note)) {
+            if (typeof value === 'object' || Array.isArray(value)) {
+                fields[key] = JSON.stringify(value);
+            } else {
+                fields[key] = String(value);
+            }
+        }
+
+        const payload = buildMultipartFormData(boundary, fields, files);
+
         const response = await fetch(webhook.url, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify(note)
+            body: payload
         });
 
         if (webhook.responseHandling === 'text') {

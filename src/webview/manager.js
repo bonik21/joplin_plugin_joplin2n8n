@@ -87,6 +87,13 @@ function render() {
                     <option value="html" ${hook.responseHandling === 'html' ? 'selected' : ''}>${t.responseHtml || 'Show Response HTML'}</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>${t.attachmentHandling || 'Markdown Attachment Links'}</label>
+                <select data-index="${index}" data-field="attachmentHandling">
+                    <option value="keep_id" ${hook.attachmentHandling === 'keep_id' || !hook.attachmentHandling ? 'selected' : ''}>${t.attachmentKeepId || 'Keep Link (:/joplin_resource_id)'}</option>
+                    <option value="replace_name" ${hook.attachmentHandling === 'replace_name' ? 'selected' : ''}>${t.attachmentReplaceName || 'Replace with Filename'}</option>
+                </select>
+            </div>
             <div style="text-align: right; margin-top: 10px;">
                 <button type="button" class="btn btn-danger delete-btn" data-index="${index}">${t.delete || 'Delete'}</button>
             </div>
@@ -103,7 +110,8 @@ function render() {
                 title: '',
                 url: '',
                 authType: 'none',
-                responseHandling: 'status'
+                responseHandling: 'status',
+                attachmentHandling: 'keep_id'
             });
             render();
             updateHiddenInput();
@@ -137,7 +145,7 @@ function render() {
         el.addEventListener('input', (e) => {
             const index = e.target.getAttribute('data-index');
             const field = e.target.getAttribute('data-field');
-            if (index !== null && field && field !== 'authType' && field !== 'responseHandling') {
+            if (index !== null && field && field !== 'authType' && field !== 'responseHandling' && field !== 'attachmentHandling') {
                 const idx = parseInt(index, 10);
                 webhooks[idx][field] = e.target.value;
                 updateHiddenInput();
