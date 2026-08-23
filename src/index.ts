@@ -99,6 +99,33 @@ async function executeWebhook(webhook: Webhook) {
             }
         }
 
+        // Fetch tags
+        let tags: string[] = [];
+        try {
+            const tagsResponse = await joplin.data.get(['notes', note.id, 'tags'], { fields: ['title'] });
+            if (tagsResponse && tagsResponse.items) {
+                tags = tagsResponse.items.map((t: any) => t.title);
+            }
+        } catch (e) {
+            console.warn('Could not fetch tags', e);
+        }
+        fields['tag'] = JSON.stringify(tags);
+
+        // Fetch notebook path
+        const notebookNames: string[] = [];
+        let currentFolderId = note.parent_id;
+        while (currentFolderId) {
+            try {
+                const folder = await joplin.data.get(['folders', currentFolderId], { fields: ['id', 'title', 'parent_id'] });
+                notebookNames.unshift(folder.title);
+                currentFolderId = folder.parent_id || '';
+            } catch (e) {
+                console.warn('Could not fetch folder', e);
+                break;
+            }
+        }
+        fields['notebook'] = notebookNames.join('|');
+
         const payload = buildMultipartFormData(boundary, fields, files);
 
         const response = await fetch(webhook.url, {
