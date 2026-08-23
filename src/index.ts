@@ -131,7 +131,7 @@ async function executeWebhook(webhook: Webhook) {
         const response = await fetch(webhook.url, {
             method: 'POST',
             headers: headers,
-            body: payload
+            body: payload as any
         });
 
         if (webhook.responseHandling === 'text') {
