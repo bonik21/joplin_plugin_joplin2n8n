@@ -10,7 +10,7 @@ export interface Webhook {
     basicUser?: string;
     basicPass?: string;
     headerAuth?: string;
-    responseHandling: 'status' | 'full';
+    responseHandling: 'status' | 'text' | 'html';
 }
 
 export async function registerSettings(onOpenManager?: () => Promise<void>) {

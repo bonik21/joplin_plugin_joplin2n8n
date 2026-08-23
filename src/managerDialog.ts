@@ -26,7 +26,8 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         headerPreview: _('headerPreview'),
         responseHandling: _('responseHandling'),
         responseStatus: _('responseStatus'),
-        responseFull: _('responseFull'),
+        responseText: _('responseText'),
+        responseHtml: _('responseHtml'),
         delete: _('delete'),
     };
     

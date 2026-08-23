@@ -83,7 +83,8 @@ function render() {
                 <label>${t.responseHandling || 'Response Handling'}</label>
                 <select data-index="${index}" data-field="responseHandling">
                     <option value="status" ${hook.responseHandling === 'status' ? 'selected' : ''}>${t.responseStatus || 'Status only'}</option>
-                    <option value="full" ${hook.responseHandling === 'full' ? 'selected' : ''}>${t.responseFull || 'Full response (HTML/Text)'}</option>
+                    <option value="text" ${hook.responseHandling === 'text' ? 'selected' : ''}>${t.responseText || 'Show Response TEXT'}</option>
+                    <option value="html" ${hook.responseHandling === 'html' ? 'selected' : ''}>${t.responseHtml || 'Show Response HTML'}</option>
                 </select>
             </div>
             <div style="text-align: right; margin-top: 10px;">

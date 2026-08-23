@@ -22,9 +22,11 @@
   "headerPreview": "헤더 인증 값 (예: Bearer abcd...)",
   "responseHandling": "응답 처리",
   "responseStatus": "성공 여부만 표시",
-  "responseFull": "응답 내용 전체 표시 (HTML/Text)",
+  "responseText": "응답 TEXT를 표시",
+  "responseHtml": "응답 HTML을 표시",
   "delete": "삭제",
   "save": "저장",
   "cancel": "취소",
-  "webhookNotFound": "웹훅을 찾을 수 없거나 삭제되었습니다."
+  "webhookNotFound": "웹훅을 찾을 수 없거나 삭제되었습니다.",
+  "restartRequiredToApplyUIChanges": "웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요."
 }

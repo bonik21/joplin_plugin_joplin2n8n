@@ -22,9 +22,11 @@
   "headerPreview": "Header Value (e.g. Bearer abcd...)",
   "responseHandling": "Response Handling",
   "responseStatus": "Status only (Success/Failure)",
-  "responseFull": "Full response (HTML/Text)",
+  "responseText": "Show Response TEXT",
+  "responseHtml": "Show Response HTML",
   "delete": "Delete",
   "save": "Save",
   "cancel": "Cancel",
-  "webhookNotFound": "Webhook not found or deleted."
+  "webhookNotFound": "Webhook not found or deleted.",
+  "restartRequiredToApplyUIChanges": "Webhook settings have been changed. Please restart Joplin to fully apply the changes to the toolbar and context menu."
 }

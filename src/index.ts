@@ -5,6 +5,7 @@ import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
 
 const registeredCommandIds = new Set<string>();
+let htmlDialogHandle = '';
 
 async function executeWebhook(webhook: Webhook) {
     const note = await joplin.workspace.selectedNote();
@@ -31,9 +32,13 @@ async function executeWebhook(webhook: Webhook) {
             body: JSON.stringify(note)
         });
 
-        if (webhook.responseHandling === 'full') {
+        if (webhook.responseHandling === 'text') {
             const text = await response.text();
             await joplin.views.dialogs.showMessageBox(`Response (${response.status}):\n\n${text}`);
+        } else if (webhook.responseHandling === 'html') {
+            const html = await response.text();
+            await joplin.views.dialogs.setHtml(htmlDialogHandle, `<div style="padding: 10px; user-select: text;">${html}</div>`);
+            await joplin.views.dialogs.open(htmlDialogHandle);
         } else {
             if (response.ok) {
                 await joplin.views.dialogs.showMessageBox(_('noteSentSuccess', webhook.title || webhook.url));
@@ -96,6 +101,9 @@ export async function updateDynamicMenu() {
         index++;
     }
     
+    // Always add the settings command
+    menuItems.push({ commandName: 'joplin2n8n.openManager' });
+
     // Tools menu supports submenus
     if (menuItems.length > 0) {
         try {
@@ -115,21 +123,38 @@ async function registerBaseCommands() {
             label: _('settingsButton'),
             iconName: 'fas fa-cog',
             execute: async () => {
-                await openWebhookManager(updateDynamicMenu);
+                const prevWebhooks = await joplin.settings.value('webhooks');
+                await openWebhookManager(async () => {
+                    await updateDynamicMenu();
+                    const newWebhooks = await joplin.settings.value('webhooks');
+                    if (prevWebhooks !== newWebhooks) {
+                        await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges', '웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요.'));
+                    }
+                });
             },
         });
         registeredCommandIds.add(managerCommandId);
-        
-        // Add to Tools menu: Tools -> joplin2n8n 설정 변경
-        await joplin.views.menuItems.create('joplin2n8n_openManager_tools', managerCommandId, MenuItemLocation.Tools);
     }
 }
 
 joplin.plugins.register({
     onStart: async function() {
         await initI18n();
+        
+        // Initialize HTML response dialog
+        htmlDialogHandle = await joplin.views.dialogs.create('joplin2n8nHtmlResponse');
+        await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);
+        await joplin.views.dialogs.setFitToContent(htmlDialogHandle, false);
+
         await registerSettings(async () => {
-            await openWebhookManager(updateDynamicMenu);
+            const prevWebhooks = await joplin.settings.value('webhooks');
+            await openWebhookManager(async () => {
+                await updateDynamicMenu();
+                const newWebhooks = await joplin.settings.value('webhooks');
+                if (prevWebhooks !== newWebhooks) {
+                    await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges', '웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요.'));
+                }
+            });
         });
         await registerBaseCommands();
         await updateDynamicMenu();
