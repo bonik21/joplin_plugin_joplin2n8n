@@ -28,7 +28,7 @@
   "headerPreview": "헤더 인증 값 (예: Bearer abcd...)",
   "responseHandling": "응답 처리",
   "responseStatus": "성공 여부만 표시",
-  "responseText": "응답 TEXT를 표시",
+  "responseText": "응답 TEXT/MD를 표시",
   "responseHtml": "응답 HTML을 표시",
   "attachmentHandling": "마크다운 첨부파일 처리",
   "attachmentKeepId": "링크 유지 (:/joplin_resource_id)",

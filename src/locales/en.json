@@ -28,7 +28,7 @@
   "headerPreview": "Header Value (e.g. Bearer abcd...)",
   "responseHandling": "Response Handling",
   "responseStatus": "Status only (Success/Failure)",
-  "responseText": "Show Response TEXT",
+  "responseText": "Show Response TEXT/MD",
   "responseHtml": "Show Response HTML",
   "attachmentHandling": "Markdown Attachment Links",
   "attachmentKeepId": "Keep Link (:/joplin_resource_id)",

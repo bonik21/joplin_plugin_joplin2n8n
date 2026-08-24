@@ -134,11 +134,22 @@ async function executeWebhook(webhook: Webhook) {
             body: payload as any
         });
 
-        if (webhook.responseHandling === 'text') {
-            const text = await response.text();
-            await joplin.views.dialogs.showMessageBox(`Response (${response.status}):\n\n${text}`);
-        } else if (webhook.responseHandling === 'html') {
-            const html = await response.text();
+        if (webhook.responseHandling === 'text' || webhook.responseHandling === 'html') {
+            const rawResponse = await response.text();
+            
+            let displayHtml = rawResponse;
+            if (webhook.responseHandling === 'text') {
+                const escapeHtml = (unsafe: string) => {
+                    return unsafe
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+                };
+                displayHtml = `<pre style="white-space: pre-wrap; font-family: monospace;">${escapeHtml(rawResponse)}</pre>`;
+            }
+
             await joplin.views.dialogs.setButtons(htmlDialogHandle, [
                 { id: 'copyToClipboard', title: _('copyToClipboard') },
                 { id: 'replaceNoteBody', title: _('replaceNoteBody') },
@@ -162,14 +173,14 @@ async function executeWebhook(webhook: Webhook) {
                         word-break: break-word;
                     }
                 </style>
-                <div id="response-container">${html}</div>
+                <div id="response-container">${displayHtml}</div>
             `);
             const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
 
             if (dlgResult.id === 'copyToClipboard') {
-                await joplin.clipboard.writeText(html);
+                await joplin.clipboard.writeText(rawResponse);
             } else if (dlgResult.id === 'replaceNoteBody') {
-                await joplin.data.put(['notes', note.id], null, { body: html });
+                await joplin.data.put(['notes', note.id], null, { body: rawResponse });
             }
 
         } else {
