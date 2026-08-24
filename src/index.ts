@@ -14,6 +14,15 @@ async function executeWebhook(webhook: Webhook) {
         return;
     }
 
+    const copyNoteBeforeSend = await joplin.settings.value('copyNoteBeforeSend');
+    if (copyNoteBeforeSend) {
+        try {
+            await joplin.clipboard.writeText(note.body);
+        } catch (e) {
+            console.warn('Failed to copy note body to clipboard', e);
+        }
+    }
+
     try {
         const headers: Record<string, string> = {};
 

@@ -39,6 +39,14 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
             label: _('openManagerOptionLabel'),
             description: _('openManagerOptionDesc'),
         },
+        'copyNoteBeforeSend': {
+            value: true,
+            type: SettingItemType.Bool,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('copyNoteBeforeSendLabel'),
+            description: _('copyNoteBeforeSendDesc'),
+        },
         'showInContextMenu': {
             value: true,
             type: SettingItemType.Bool,
