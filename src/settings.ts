@@ -14,12 +14,14 @@ export interface Webhook {
     attachmentHandling: 'keep_id' | 'replace_name';
 }
 
-export async function registerSettings(onOpenManager?: () => Promise<void>) {
+export async function registerSettings(platform: 'desktop' | 'mobile', onOpenManager?: () => Promise<void>) {
     await joplin.settings.registerSection('joplin2n8n', {
         label: _('pluginName'),
         iconName: 'fas fa-paper-plane',
         description: _('settingsSectionDesc'),
     });
+
+    const isDesktop = platform === 'desktop';
 
     await joplin.settings.registerSettings({
         'webhooks': {
@@ -41,7 +43,7 @@ export async function registerSettings(onOpenManager?: () => Promise<void>) {
             value: true,
             type: SettingItemType.Bool,
             section: 'joplin2n8n',
-            public: true,
+            public: isDesktop,  // Hidden on mobile (not supported)
             label: _('showInContextMenuLabel'),
             description: _('showInContextMenuDesc'),
         },
@@ -50,14 +52,14 @@ export async function registerSettings(onOpenManager?: () => Promise<void>) {
             type: SettingItemType.Bool,
             section: 'joplin2n8n',
             public: true,
-            label: _('showInNoteToolbarLabel'),
-            description: _('showInNoteToolbarDesc'),
+            label: isDesktop ? _('showInNoteToolbarLabel') : _('showInNoteToolbarLabelMobile'),
+            description: isDesktop ? _('showInNoteToolbarDesc') : _('showInNoteToolbarDescMobile'),
         },
         'showInToolsMenu': {
             value: true,
             type: SettingItemType.Bool,
             section: 'joplin2n8n',
-            public: true,
+            public: isDesktop,  // Hidden on mobile (not supported)
             label: _('showInToolsMenuLabel'),
             description: _('showInToolsMenuDesc'),
         },

@@ -1,32 +1,6 @@
 import joplin from 'api';
 import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { initI18n, _ } from './i18n';
-const fs = joplin.require('fs-extra');
-
-function buildMultipartFormData(boundary: string, fields: Record<string, string>, files: { name: string, filename: string, buffer: Buffer, mime: string }[]): Buffer {
-    const buffers: Buffer[] = [];
-
-    // Add text fields
-    for (const [key, value] of Object.entries(fields)) {
-        buffers.push(Buffer.from(`--${boundary}\r\n`));
-        buffers.push(Buffer.from(`Content-Disposition: form-data; name="${key}"\r\n\r\n`));
-        buffers.push(Buffer.from(`${value}\r\n`));
-    }
-
-    // Add files
-    for (const file of files) {
-        buffers.push(Buffer.from(`--${boundary}\r\n`));
-        buffers.push(Buffer.from(`Content-Disposition: form-data; name="${file.name}"; filename="${file.filename}"\r\n`));
-        buffers.push(Buffer.from(`Content-Type: ${file.mime}\r\n\r\n`));
-        buffers.push(file.buffer);
-        buffers.push(Buffer.from(`\r\n`));
-    }
-
-    // End boundary
-    buffers.push(Buffer.from(`--${boundary}--\r\n`));
-
-    return Buffer.concat(buffers);
-}
 import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
 
@@ -44,7 +18,8 @@ async function executeWebhook(webhook: Webhook) {
         const headers: Record<string, string> = {};
 
         if (webhook.authType === 'basic' && webhook.basicUser && webhook.basicPass) {
-            const authString = Buffer.from(`${webhook.basicUser}:${webhook.basicPass}`).toString('base64');
+            // btoa() is available in both Electron (desktop) and React Native (mobile)
+            const authString = btoa(`${webhook.basicUser}:${webhook.basicPass}`);
             headers['Authorization'] = `Basic ${authString}`;
         } else if (webhook.authType === 'header' && webhook.headerAuth) {
             headers['Authorization'] = webhook.headerAuth;
@@ -58,22 +33,25 @@ async function executeWebhook(webhook: Webhook) {
             resourceIds.add(match[1]);
         }
 
-        const files: { name: string, filename: string, buffer: Buffer, mime: string }[] = [];
+        // Use standard FormData — works on both desktop and mobile
+        const formData = new FormData();
         let modifiedBody = note.body;
 
         for (const id of resourceIds) {
             try {
                 const resource = await joplin.data.get(['resources', id], { fields: ['id', 'title', 'mime'] });
                 const filePath = await joplin.data.resourcePath(id);
-                const buffer = await fs.readFile(filePath);
+
+                // Use fetch with file:// URL — works on Electron (desktop) and React Native (mobile)
+                const normalizedPath = filePath.replace(/\\/g, '/');
+                const fileUrl = normalizedPath.startsWith('/') ? `file://${normalizedPath}` : `file:///${normalizedPath}`;
+                const fileRes = await fetch(fileUrl);
+                const arrayBuffer = await fileRes.arrayBuffer();
 
                 const filename = resource.title || id;
-                files.push({
-                    name: id,
-                    filename: filename,
-                    buffer: buffer,
-                    mime: resource.mime || 'application/octet-stream'
-                });
+                const mime = resource.mime || 'application/octet-stream';
+                const blob = new Blob([arrayBuffer], { type: mime });
+                formData.append(id, blob, filename);
 
                 if (webhook.attachmentHandling === 'replace_name') {
                     // Replace Markdown link ID with filename
@@ -87,15 +65,12 @@ async function executeWebhook(webhook: Webhook) {
 
         note.body = modifiedBody;
 
-        const boundary = '----Joplin2n8nBoundary' + Math.random().toString(16).substring(2);
-        headers['Content-Type'] = `multipart/form-data; boundary=${boundary}`;
-
-        const fields: Record<string, string> = {};
+        // Add note fields as text parts
         for (const [key, value] of Object.entries(note)) {
             if (typeof value === 'object' || Array.isArray(value)) {
-                fields[key] = JSON.stringify(value);
+                formData.append(key, JSON.stringify(value));
             } else {
-                fields[key] = String(value);
+                formData.append(key, String(value));
             }
         }
 
@@ -109,7 +84,7 @@ async function executeWebhook(webhook: Webhook) {
         } catch (e) {
             console.warn('Could not fetch tags', e);
         }
-        fields['tag'] = JSON.stringify(tags);
+        formData.append('tag', JSON.stringify(tags));
 
         // Fetch notebook path
         const notebookNames: string[] = [];
@@ -124,14 +99,13 @@ async function executeWebhook(webhook: Webhook) {
                 break;
             }
         }
-        fields['notebook'] = notebookNames.join('|');
+        formData.append('notebook', notebookNames.join('|'));
 
-        const payload = buildMultipartFormData(boundary, fields, files);
-
+        // Do NOT set Content-Type manually — fetch sets it automatically with the correct boundary
         const response = await fetch(webhook.url, {
             method: 'POST',
             headers: headers,
-            body: payload as any
+            body: formData
         });
 
         if (webhook.responseHandling === 'text' || webhook.responseHandling === 'html') {
@@ -182,8 +156,15 @@ async function executeWebhook(webhook: Webhook) {
             } else if (dlgResult.id === 'replaceNoteBody') {
                 const activeNote = await joplin.workspace.selectedNote();
                 if (activeNote && activeNote.id === note.id) {
-                    await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
-                    await joplin.commands.execute('replaceSelection', rawResponse);
+                    const versionInfo = await joplin.versionInfo();
+                    if (versionInfo.platform === 'desktop') {
+                        // Desktop: use editor command so Ctrl+Z (undo) works
+                        await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
+                        await joplin.commands.execute('replaceSelection', rawResponse);
+                    } else {
+                        // Mobile: editor commands not supported, write directly to DB
+                        await joplin.data.put(['notes', note.id], null, { body: rawResponse });
+                    }
                 } else {
                     await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
                 }
@@ -235,8 +216,9 @@ export async function updateDynamicMenu() {
 
             registeredCommandIds.add(commandId);
 
-            // Context menu — only register if setting is enabled
-            if (showInContextMenu) {
+            // Context menu — only register if setting is enabled AND on desktop
+            const versionInfoForMenu = await joplin.versionInfo();
+            if (showInContextMenu && versionInfoForMenu.platform === 'desktop') {
                 try {
                     await joplin.views.menuItems.create(`${commandId}_ctx`, commandId, MenuItemLocation.NoteListContextMenu);
                 } catch (e) {
@@ -310,7 +292,8 @@ joplin.plugins.register({
         await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);
         await joplin.views.dialogs.setFitToContent(htmlDialogHandle, false);
 
-        await registerSettings(async () => {
+        const versionInfo = await joplin.versionInfo();
+        await registerSettings(versionInfo.platform, async () => {
             const prevWebhooks = await joplin.settings.value('webhooks');
             await openWebhookManager(async () => {
                 await updateDynamicMenu();
