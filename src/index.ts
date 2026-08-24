@@ -180,7 +180,13 @@ async function executeWebhook(webhook: Webhook) {
             if (dlgResult.id === 'copyToClipboard') {
                 await joplin.clipboard.writeText(rawResponse);
             } else if (dlgResult.id === 'replaceNoteBody') {
-                await joplin.data.put(['notes', note.id], null, { body: rawResponse });
+                const activeNote = await joplin.workspace.selectedNote();
+                if (activeNote && activeNote.id === note.id) {
+                    await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
+                    await joplin.commands.execute('replaceSelection', rawResponse);
+                } else {
+                    await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
+                }
             }
 
         } else {

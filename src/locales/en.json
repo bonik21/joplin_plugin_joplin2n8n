@@ -40,5 +40,6 @@
   "restartRequiredToApplyUIChanges": "Webhook settings have been changed. Please restart Joplin to fully apply the changes to the toolbar and context menu.",
   "copyToClipboard": "Copy to Clipboard",
   "replaceNoteBody": "Replace Note Body with Response",
-  "copied": "Copied!"
+  "copied": "Copied!",
+  "errorNoteMismatch": "The currently active note is different from the note that sent the request. To replace its body, the original note must be open in the editor."
 }
