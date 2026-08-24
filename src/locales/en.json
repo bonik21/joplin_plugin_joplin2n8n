@@ -37,5 +37,8 @@
   "save": "Save",
   "cancel": "Cancel",
   "webhookNotFound": "Webhook not found or deleted.",
-  "restartRequiredToApplyUIChanges": "Webhook settings have been changed. Please restart Joplin to fully apply the changes to the toolbar and context menu."
+  "restartRequiredToApplyUIChanges": "Webhook settings have been changed. Please restart Joplin to fully apply the changes to the toolbar and context menu.",
+  "copyToClipboard": "Copy to Clipboard",
+  "replaceNoteBody": "Replace Note Body with Response",
+  "copied": "Copied!"
 }

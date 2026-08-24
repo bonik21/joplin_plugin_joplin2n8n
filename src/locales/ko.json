@@ -37,5 +37,8 @@
   "save": "저장",
   "cancel": "취소",
   "webhookNotFound": "웹훅을 찾을 수 없거나 삭제되었습니다.",
-  "restartRequiredToApplyUIChanges": "웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요."
+  "restartRequiredToApplyUIChanges": "웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요.",
+  "copyToClipboard": "클립보드에 복사",
+  "replaceNoteBody": "노트 본문을 응답으로 교체",
+  "copied": "복사됨"
 }

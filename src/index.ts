@@ -139,6 +139,11 @@ async function executeWebhook(webhook: Webhook) {
             await joplin.views.dialogs.showMessageBox(`Response (${response.status}):\n\n${text}`);
         } else if (webhook.responseHandling === 'html') {
             const html = await response.text();
+            await joplin.views.dialogs.setButtons(htmlDialogHandle, [
+                { id: 'copyToClipboard', title: _('copyToClipboard') },
+                { id: 'replaceNoteBody', title: _('replaceNoteBody') },
+                { id: 'ok', title: 'OK' },
+            ]);
             await joplin.views.dialogs.setHtml(htmlDialogHandle, `
                 <style>
                     html, body {
@@ -159,7 +164,14 @@ async function executeWebhook(webhook: Webhook) {
                 </style>
                 <div id="response-container">${html}</div>
             `);
-            await joplin.views.dialogs.open(htmlDialogHandle);
+            const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
+
+            if (dlgResult.id === 'copyToClipboard') {
+                await joplin.clipboard.writeText(html);
+            } else if (dlgResult.id === 'replaceNoteBody') {
+                await joplin.data.put(['notes', note.id], null, { body: html });
+            }
+
         } else {
             if (response.ok) {
                 await joplin.views.dialogs.showMessageBox(_('noteSentSuccess', webhook.title || webhook.url));
