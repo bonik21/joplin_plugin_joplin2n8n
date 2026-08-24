@@ -5,14 +5,14 @@ const fs = joplin.require('fs-extra');
 
 function buildMultipartFormData(boundary: string, fields: Record<string, string>, files: { name: string, filename: string, buffer: Buffer, mime: string }[]): Buffer {
     const buffers: Buffer[] = [];
-    
+
     // Add text fields
     for (const [key, value] of Object.entries(fields)) {
         buffers.push(Buffer.from(`--${boundary}\r\n`));
         buffers.push(Buffer.from(`Content-Disposition: form-data; name="${key}"\r\n\r\n`));
         buffers.push(Buffer.from(`${value}\r\n`));
     }
-    
+
     // Add files
     for (const file of files) {
         buffers.push(Buffer.from(`--${boundary}\r\n`));
@@ -21,10 +21,10 @@ function buildMultipartFormData(boundary: string, fields: Record<string, string>
         buffers.push(file.buffer);
         buffers.push(Buffer.from(`\r\n`));
     }
-    
+
     // End boundary
     buffers.push(Buffer.from(`--${boundary}--\r\n`));
-    
+
     return Buffer.concat(buffers);
 }
 import { registerSettings, getWebhooks, Webhook } from './settings';
@@ -66,7 +66,7 @@ async function executeWebhook(webhook: Webhook) {
                 const resource = await joplin.data.get(['resources', id], { fields: ['id', 'title', 'mime'] });
                 const filePath = await joplin.data.resourcePath(id);
                 const buffer = await fs.readFile(filePath);
-                
+
                 const filename = resource.title || id;
                 files.push({
                     name: id,
@@ -74,7 +74,7 @@ async function executeWebhook(webhook: Webhook) {
                     buffer: buffer,
                     mime: resource.mime || 'application/octet-stream'
                 });
-                
+
                 if (webhook.attachmentHandling === 'replace_name') {
                     // Replace Markdown link ID with filename
                     const replaceRegex = new RegExp(`\\(:\\/${id}\\)`, 'g');
@@ -139,7 +139,26 @@ async function executeWebhook(webhook: Webhook) {
             await joplin.views.dialogs.showMessageBox(`Response (${response.status}):\n\n${text}`);
         } else if (webhook.responseHandling === 'html') {
             const html = await response.text();
-            await joplin.views.dialogs.setHtml(htmlDialogHandle, `<div style="padding: 10px; user-select: text;">${html}</div>`);
+            await joplin.views.dialogs.setHtml(htmlDialogHandle, `
+                <style>
+                    html, body {
+                        margin: 0;
+                        padding: 0;
+                        height: 100%;
+                        box-sizing: border-box;
+                    }
+                    #response-container {
+                        padding: 10px;
+                        user-select: text;
+                        overflow-y: auto;
+                        min-width: 700px;
+                        max-height: 95vh;
+                        box-sizing: border-box;
+                        word-break: break-word;
+                    }
+                </style>
+                <div id="response-container">${html}</div>
+            `);
             await joplin.views.dialogs.open(htmlDialogHandle);
         } else {
             if (response.ok) {
@@ -155,17 +174,20 @@ async function executeWebhook(webhook: Webhook) {
 
 export async function updateDynamicMenu() {
     const webhooks = await getWebhooks();
-    
+    const showInContextMenu = await joplin.settings.value('showInContextMenu');
+    const showInNoteToolbar = await joplin.settings.value('showInNoteToolbar');
+    const showInToolsMenu = await joplin.settings.value('showInToolsMenu');
+
     let index = 1;
     const menuItems = [];
     for (const hook of webhooks) {
         if (!hook.id) continue;
-        
+
         const commandId = `joplin2n8n.send_${hook.id}`;
-        
+
         if (!registeredCommandIds.has(commandId)) {
             const accelerator = index <= 9 ? `CmdOrCtrl+Alt+${index}` : undefined;
-            
+
             await joplin.commands.register({
                 name: commandId,
                 label: _('sendToWebhook', hook.title || 'n8n'),
@@ -181,37 +203,48 @@ export async function updateDynamicMenu() {
                     }
                 },
             });
-            
+
             registeredCommandIds.add(commandId);
-            
-            // Context menu doesn't support sub-menus well, so add them individually
-            try {
-                await joplin.views.menuItems.create(`${commandId}_ctx`, commandId, MenuItemLocation.NoteListContextMenu);
-            } catch (e) {
-                console.warn(e);
+
+            // Context menu — only register if setting is enabled
+            if (showInContextMenu) {
+                try {
+                    await joplin.views.menuItems.create(`${commandId}_ctx`, commandId, MenuItemLocation.NoteListContextMenu);
+                } catch (e) {
+                    console.warn(e);
+                }
             }
 
-            // Add to Toolbar individually
-            try {
-                await joplin.views.toolbarButtons.create(`${commandId}_tb`, commandId, ToolbarButtonLocation.NoteToolbar);
-            } catch (e) {
-                console.warn(e);
+            // Note toolbar — only register if setting is enabled
+            if (showInNoteToolbar) {
+                try {
+                    await joplin.views.toolbarButtons.create(`${commandId}_tb`, commandId, ToolbarButtonLocation.NoteToolbar);
+                } catch (e) {
+                    console.warn(e);
+                }
             }
         }
-        
+
         menuItems.push({ commandName: commandId });
         index++;
     }
-    
+
     // Always add the settings command
     menuItems.push({ commandName: 'joplin2n8n.openManager' });
 
-    // Tools menu supports submenus
-    if (menuItems.length > 0) {
+    // Tools menu — only register if setting is enabled (always include settings command)
+    if (showInToolsMenu && menuItems.length > 0) {
         try {
             await joplin.views.menus.create('joplin2n8n_tools_menu', 'joplin2n8n', menuItems, MenuItemLocation.Tools);
         } catch (e) {
             console.warn('Could not create/update tools menu (might already exist):', e);
+        }
+    } else if (!showInToolsMenu) {
+        // Tools menu disabled — still register the settings command in Tools menu so the plugin remains accessible
+        try {
+            await joplin.views.menus.create('joplin2n8n_tools_menu', 'joplin2n8n', [{ commandName: 'joplin2n8n.openManager' }], MenuItemLocation.Tools);
+        } catch (e) {
+            console.warn('Could not create tools menu for manager only:', e);
         }
     }
 }
@@ -240,9 +273,9 @@ async function registerBaseCommands() {
 }
 
 joplin.plugins.register({
-    onStart: async function() {
+    onStart: async function () {
         await initI18n();
-        
+
         // Initialize HTML response dialog
         htmlDialogHandle = await joplin.views.dialogs.create('joplin2n8nHtmlResponse');
         await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);

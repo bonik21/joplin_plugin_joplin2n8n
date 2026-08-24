@@ -36,7 +36,31 @@ export async function registerSettings(onOpenManager?: () => Promise<void>) {
             public: true,
             label: _('openManagerOptionLabel'),
             description: _('openManagerOptionDesc'),
-        }
+        },
+        'showInContextMenu': {
+            value: true,
+            type: SettingItemType.Bool,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('showInContextMenuLabel'),
+            description: _('showInContextMenuDesc'),
+        },
+        'showInNoteToolbar': {
+            value: true,
+            type: SettingItemType.Bool,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('showInNoteToolbarLabel'),
+            description: _('showInNoteToolbarDesc'),
+        },
+        'showInToolsMenu': {
+            value: true,
+            type: SettingItemType.Bool,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('showInToolsMenuLabel'),
+            description: _('showInToolsMenuDesc'),
+        },
     });
 
     await joplin.settings.onChange(async (event) => {
@@ -48,6 +72,10 @@ export async function registerSettings(onOpenManager?: () => Promise<void>) {
                     await onOpenManager();
                 }
             }
+        }
+        const uiKeys = ['showInContextMenu', 'showInNoteToolbar', 'showInToolsMenu'];
+        if (uiKeys.some(k => event.keys.includes(k))) {
+            await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges'));
         }
     });
 }
