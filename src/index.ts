@@ -6,6 +6,7 @@ import { openWebhookManager } from './managerDialog';
 
 const registeredCommandIds = new Set<string>();
 let htmlDialogHandle = '';
+let sendDialogHandle = '';
 
 async function executeWebhook(webhook: Webhook) {
     const note = await joplin.workspace.selectedNote();
@@ -195,6 +196,7 @@ export async function updateDynamicMenu() {
     const webhooks = await getWebhooks();
     const showInContextMenu = await joplin.settings.value('showInContextMenu');
     const showInNoteToolbar = await joplin.settings.value('showInNoteToolbar');
+    const showInEditorToolbar = await joplin.settings.value('showInEditorToolbar');
     const showInToolsMenu = await joplin.settings.value('showInToolsMenu');
 
     let index = 1;
@@ -249,6 +251,63 @@ export async function updateDynamicMenu() {
         index++;
     }
 
+    // Editor Toolbar Button (Mobile Bottom Toolbar integration)
+    const mobileSendCmdId = 'joplin2n8n.mobileSend';
+    if (!registeredCommandIds.has(mobileSendCmdId)) {
+        await joplin.commands.register({
+            name: mobileSendCmdId,
+            label: _('sendToN8n'),
+            iconName: 'fas fa-paper-plane',
+            execute: async () => {
+                const currentHooks = await getWebhooks();
+                if (currentHooks.length === 0) {
+                    await joplin.views.dialogs.showMessageBox(_('noWebhooksConfigured'));
+                    return;
+                }
+                if (currentHooks.length === 1) {
+                    await executeWebhook(currentHooks[0]);
+                    return;
+                }
+                let optionsHtml = '';
+                for (const hook of currentHooks) {
+                    optionsHtml += `<option value="${hook.id}">${hook.title || 'n8n'}</option>`;
+                }
+                const html = `
+                    <form name="sendForm">
+                        <div style="padding: 10px;">
+                            <h3 style="margin-top:0">${_('sendToN8n')}</h3>
+                            <select name="webhookId" style="width: 100%; padding: 10px; font-size: 16px;">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    </form>
+                `;
+                await joplin.views.dialogs.setHtml(sendDialogHandle, html);
+                await joplin.views.dialogs.setButtons(sendDialogHandle, [
+                    { id: 'ok', title: 'OK' },
+                    { id: 'cancel', title: _('cancel') }
+                ]);
+                const dlgResult = await joplin.views.dialogs.open(sendDialogHandle);
+                if (dlgResult.id === 'ok' && dlgResult.formData && dlgResult.formData.sendForm && dlgResult.formData.sendForm.webhookId) {
+                    const selectedId = dlgResult.formData.sendForm.webhookId;
+                    const hook = currentHooks.find(w => w.id === selectedId);
+                    if (hook) {
+                        await executeWebhook(hook);
+                    }
+                }
+            }
+        });
+        registeredCommandIds.add(mobileSendCmdId);
+    }
+    
+    if (showInEditorToolbar) {
+        try {
+            await joplin.views.toolbarButtons.create(`${mobileSendCmdId}_etb`, mobileSendCmdId, ToolbarButtonLocation.EditorToolbar);
+        } catch (e) {
+            console.warn(e);
+        }
+    }
+
     // Always add the settings command
     menuItems.push({ commandName: 'joplin2n8n.openManager' });
 
@@ -300,6 +359,10 @@ joplin.plugins.register({
         htmlDialogHandle = await joplin.views.dialogs.create('joplin2n8nHtmlResponse');
         await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);
         await joplin.views.dialogs.setFitToContent(htmlDialogHandle, false);
+
+        // Initialize Send Selection Dialog
+        sendDialogHandle = await joplin.views.dialogs.create('joplin2n8nSendDialog');
+        await joplin.views.dialogs.setFitToContent(sendDialogHandle, true);
 
         const versionInfo = await joplin.versionInfo();
         await registerSettings(versionInfo.platform, async () => {

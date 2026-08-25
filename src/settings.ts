@@ -71,6 +71,14 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
             label: _('showInToolsMenuLabel'),
             description: _('showInToolsMenuDesc'),
         },
+        'showInEditorToolbar': {
+            value: true,
+            type: SettingItemType.Bool,
+            section: 'joplin2n8n',
+            public: true,
+            label: isDesktop ? _('showInEditorToolbarLabel') : _('showInEditorToolbarLabelMobile'),
+            description: isDesktop ? _('showInEditorToolbarDesc') : _('showInEditorToolbarDescMobile'),
+        },
     });
 
     await joplin.settings.onChange(async (event) => {
@@ -83,7 +91,7 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
                 }
             }
         }
-        const uiKeys = ['showInContextMenu', 'showInNoteToolbar', 'showInToolsMenu'];
+        const uiKeys = ['showInContextMenu', 'showInNoteToolbar', 'showInToolsMenu', 'showInEditorToolbar'];
         if (uiKeys.some(k => event.keys.includes(k))) {
             await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges'));
         }
