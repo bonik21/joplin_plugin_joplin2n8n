@@ -85,6 +85,7 @@ function render() {
                     <option value="status" ${hook.responseHandling === 'status' ? 'selected' : ''}>${t.responseStatus || 'Status only'}</option>
                     <option value="text" ${hook.responseHandling === 'text' ? 'selected' : ''}>${t.responseText || 'Show Response TEXT'}</option>
                     <option value="html" ${hook.responseHandling === 'html' ? 'selected' : ''}>${t.responseHtml || 'Show Response HTML'}</option>
+                    <option value="file" ${hook.responseHandling === 'file' ? 'selected' : ''}>${t.responseFile || 'Insert File into Note'}</option>
                 </select>
             </div>
             <div class="form-group">

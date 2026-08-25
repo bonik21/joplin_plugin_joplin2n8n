@@ -206,6 +206,105 @@ async function executeWebhook(webhook: Webhook) {
                 }
             }
 
+        } else if (webhook.responseHandling === 'file') {
+            // --- File insertion mode ---
+            // Determine filename from Content-Disposition header, or fallback
+            let filename = 'response_file';
+            const contentDisposition = response.headers.get('content-disposition');
+            if (contentDisposition) {
+                const fnMatch = contentDisposition.match(/filename\*?=['"]*(?:UTF-8'')?([^;"'\n]+)/i);
+                if (fnMatch && fnMatch[1]) {
+                    filename = decodeURIComponent(fnMatch[1].trim());
+                }
+            } else {
+                // Try to guess extension from Content-Type
+                const contentType = response.headers.get('content-type') || 'application/octet-stream';
+                const mimeToExt: Record<string, string> = {
+                    'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif',
+                    'image/webp': 'webp', 'image/svg+xml': 'svg',
+                    'application/pdf': 'pdf', 'text/plain': 'txt',
+                    'text/html': 'html', 'application/json': 'json',
+                };
+                const mimeBase = contentType.split(';')[0].trim();
+                const ext = mimeToExt[mimeBase];
+                if (ext) filename = `response_file.${ext}`;
+            }
+
+            const contentType = response.headers.get('content-type') || 'application/octet-stream';
+            const mimeType = contentType.split(';')[0].trim();
+            const isImage = mimeType.startsWith('image/');
+
+            // 모바일 지원 여부 체크 (Joplin 리소스 생성 API는 로컬 path를 요구함)
+            const versionInfo = await joplin.versionInfo();
+            if (versionInfo.platform !== 'desktop') {
+                await joplin.views.dialogs.showMessageBox('모바일 기기에서는 파일 다운로드 및 리소스 직접 생성을 지원하지 않습니다.');
+                return;
+            }
+
+            // PC 환경: fs 및 os 모듈을 사용하여 임시 파일 생성 후 업로드
+            const os = require('os');
+            const path = require('path');
+            const fs = require('fs-extra');
+
+            const tempFilePath = path.join(os.tmpdir(), `joplin2n8n_${Date.now()}_${filename}`);
+            
+            // Read binary
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            
+            // Write to temp file
+            fs.writeFileSync(tempFilePath, buffer);
+
+            let resource;
+            try {
+                // Create Joplin resource from local file path
+                resource = await joplin.data.post(
+                    ['resources'],
+                    null,
+                    { title: filename, mime: mimeType },
+                    [{ path: tempFilePath }]
+                );
+            } finally {
+                // Remove temp file regardless of success
+                fs.removeSync(tempFilePath);
+            }
+
+            if (!resource || !resource.id) {
+                throw new Error('Resource creation failed: no resource ID returned');
+            }
+
+            // Build markdown link
+            const mdLink = isImage
+                ? `![${filename}](:/${resource.id})`
+                : `[${filename}](:/${resource.id})`;
+
+            // Insert at cursor (desktop only) or append to note end
+            let insertedAtCursor = false;
+
+            if (versionInfo.platform === 'desktop') {
+                try {
+                    // replaceSelection inserts at cursor if nothing is selected
+                    await joplin.commands.execute('replaceSelection', '\n' + mdLink + '\n');
+                    insertedAtCursor = true;
+                } catch (e) {
+                    console.warn('Could not insert at cursor, appending to end', e);
+                }
+            }
+
+            if (!insertedAtCursor) {
+                // Append to note end (mobile or cursor insertion failed)
+                const currentNote = await joplin.workspace.selectedNote();
+                if (currentNote && currentNote.id === note.id) {
+                    const newBody = (currentNote.body || '').trimEnd() + '\n\n' + mdLink + '\n';
+                    await joplin.data.put(['notes', note.id], null, { body: newBody });
+                }
+            }
+
+            const successMsg = insertedAtCursor
+                ? _('fileInsertedAtCursor', filename)
+                : _('fileInsertedAtEnd', filename);
+            await joplin.views.dialogs.showMessageBox(successMsg);
+
         } else {
             if (response.ok) {
                 await joplin.views.dialogs.showMessageBox(_('noteSentSuccess', webhook.title || webhook.url));

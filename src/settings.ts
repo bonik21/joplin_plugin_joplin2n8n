@@ -10,7 +10,7 @@ export interface Webhook {
     basicUser?: string;
     basicPass?: string;
     headerAuth?: string;
-    responseHandling: 'status' | 'text' | 'html';
+    responseHandling: 'status' | 'text' | 'html' | 'file';
     attachmentHandling: 'keep_id' | 'replace_name';
 }
 
