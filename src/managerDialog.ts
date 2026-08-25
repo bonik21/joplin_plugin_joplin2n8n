@@ -13,6 +13,8 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
     }
     
     const webhooks = await getWebhooks();
+    const dialogWidth = await joplin.settings.value('dialogWidth') || 600;
+    const dialogHeight = await joplin.settings.value('dialogHeight') || 500;
     
     const translations = {
         title: _('settingsButton'),
@@ -33,6 +35,8 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         attachmentKeepId: _('attachmentKeepId'),
         attachmentReplaceName: _('attachmentReplaceName'),
         delete: _('delete'),
+        moveUp: _('moveUp'),
+        moveDown: _('moveDown'),
     };
     
     function escapeHtml(unsafe: string) {
@@ -45,6 +49,10 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
     }
 
     const html = `
+        <style>
+            body { min-width: ${dialogWidth}px; }
+            #webhook-list { max-height: ${dialogHeight}px; }
+        </style>
         <form name="webhook-form" id="webhook-form">
             <div id="app"></div>
             <input type="hidden" name="webhooksJson" id="webhooksJson">

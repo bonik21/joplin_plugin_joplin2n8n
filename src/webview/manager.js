@@ -7,9 +7,13 @@ function generateId() {
     return Math.random().toString(36).substr(2, 9);
 }
 
-function render() {
+function render(scrollTop) {
     const app = document.getElementById('app');
     if (!app) return;
+    
+    // Save scroll position before re-render
+    const prevList = document.getElementById('webhook-list');
+    const savedScroll = scrollTop !== undefined ? scrollTop : (prevList ? prevList.scrollTop : 0);
     
     // Load data on first render if empty
     if (webhooks.length === 0) {
@@ -44,31 +48,39 @@ function render() {
         if (hook.authType === 'basic') {
             authFields = `
                 <div class="form-group">
-                    <label>ID</label>
-                    <input type="text" data-index="${index}" data-field="basicUser" value="${escapeHtml(hook.basicUser || '')}" placeholder="username">
+                    <label>Username</label>
+                    <input type="text" data-index="${index}" data-field="basicUser" value="${escapeHtml(hook.basicUser || '')}">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" data-index="${index}" data-field="basicPass" value="${escapeHtml(hook.basicPass || '')}" placeholder="password">
+                    <input type="password" data-index="${index}" data-field="basicPass" value="${escapeHtml(hook.basicPass || '')}">
                 </div>
             `;
         } else if (hook.authType === 'header') {
             authFields = `
                 <div class="form-group">
-                    <label>${t.headerPreview || 'Header Auth Value'}</label>
-                    <input type="text" data-index="${index}" data-field="headerAuth" value="${escapeHtml(hook.headerAuth || '')}" placeholder="Bearer abcd...">
+                    <label>${t.headerPreview || 'Header Auth'}</label>
+                    <input type="text" data-index="${index}" data-field="headerAuth" value="${escapeHtml(hook.headerAuth || '')}">
                 </div>
             `;
         }
 
         item.innerHTML = `
-            <div class="form-group">
-                <label>${t.webhookTitle || 'Title'}</label>
-                <input type="text" data-index="${index}" data-field="title" value="${escapeHtml(hook.title || '')}" placeholder="e.g. Production n8n">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h4 style="margin: 0;">Webhook ${index + 1}</h4>
+                <div style="display: flex; gap: 5px;">
+                    ${index > 0 ? `<button type="button" class="btn move-up-btn" data-index="${index}">↑ ${t.moveUp || 'Move Up'}</button>` : ''}
+                    ${index < webhooks.length - 1 ? `<button type="button" class="btn move-down-btn" data-index="${index}">↓ ${t.moveDown || 'Move Down'}</button>` : ''}
+                    <button type="button" class="btn btn-danger delete-btn" data-index="${index}">${t.delete || 'Delete'}</button>
+                </div>
             </div>
             <div class="form-group">
-                <label>${t.webhookUrl || 'URL'}</label>
-                <input type="text" data-index="${index}" data-field="url" value="${escapeHtml(hook.url || '')}" placeholder="https://n8n.example.com/webhook/...">
+                <label>${t.webhookTitle || 'Webhook Title'}</label>
+                <input type="text" data-index="${index}" data-field="title" value="${escapeHtml(hook.title || '')}" placeholder="Optional">
+            </div>
+            <div class="form-group">
+                <label>${t.webhookUrl || 'Webhook URL'}</label>
+                <input type="text" data-index="${index}" data-field="url" value="${escapeHtml(hook.url || '')}" placeholder="http://...">
             </div>
             <div class="form-group">
                 <label>${t.authType || 'Auth Type'}</label>
@@ -95,12 +107,13 @@ function render() {
                     <option value="replace_name" ${hook.attachmentHandling === 'replace_name' ? 'selected' : ''}>${t.attachmentReplaceName || 'Replace with Filename'}</option>
                 </select>
             </div>
-            <div style="text-align: right; margin-top: 10px;">
-                <button type="button" class="btn btn-danger delete-btn" data-index="${index}">${t.delete || 'Delete'}</button>
-            </div>
         `;
         list.appendChild(item);
     });
+
+    // Restore scroll position
+    const newList = document.getElementById('webhook-list');
+    if (newList) newList.scrollTop = savedScroll;
 
     // Attach event listeners
     const addBtn = document.getElementById('add-btn');
@@ -115,6 +128,9 @@ function render() {
                 attachmentHandling: 'keep_id'
             });
             render();
+            // Scroll to bottom so the new webhook is visible
+            const list = document.getElementById('webhook-list');
+            if (list) list.scrollTop = list.scrollHeight;
             updateHiddenInput();
         });
     }
@@ -124,6 +140,32 @@ function render() {
             const index = e.target.getAttribute('data-index');
             if (index !== null) {
                 webhooks.splice(parseInt(index, 10), 1);
+                render();
+                updateHiddenInput();
+            }
+        });
+    });
+
+    document.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'), 10);
+            if (index > 0) {
+                const temp = webhooks[index];
+                webhooks[index] = webhooks[index - 1];
+                webhooks[index - 1] = temp;
+                render();
+                updateHiddenInput();
+            }
+        });
+    });
+
+    document.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.getAttribute('data-index'), 10);
+            if (index < webhooks.length - 1) {
+                const temp = webhooks[index];
+                webhooks[index] = webhooks[index + 1];
+                webhooks[index + 1] = temp;
                 render();
                 updateHiddenInput();
             }

@@ -55,5 +55,11 @@
   "copied": "Copied!",
   "errorNoteMismatch": "The currently active note is different from the note that sent the request. To replace its body, the original note must be open in the editor.",
   "errorMobileFileUnsupported": "Mobile devices do not support direct file downloads and resource creation.",
-  "errorMobileReplaceUnsupported": "Replacing selected text on mobile is currently not supported via API. Please copy to clipboard and paste manually."
+  "errorMobileReplaceUnsupported": "Replacing selected text on mobile is currently not supported via API. Please copy to clipboard and paste manually.",
+  "dialogWidthLabel": "[UI] Webhook Manager Dialog Width",
+  "dialogWidthDesc": "Set the width of the webhook manager dialog in pixels. (Default: 600)",
+  "dialogHeightLabel": "[UI] Webhook Manager Dialog Height",
+  "dialogHeightDesc": "Set the maximum height of the webhook list area in pixels. (Default: 500)",
+  "moveUp": "Up",
+  "moveDown": "Down"
 }

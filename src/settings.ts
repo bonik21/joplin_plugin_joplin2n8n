@@ -39,6 +39,22 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
             label: _('openManagerOptionLabel'),
             description: _('openManagerOptionDesc'),
         },
+        'dialogWidth': {
+            value: 600,
+            type: SettingItemType.Int,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('dialogWidthLabel'),
+            description: _('dialogWidthDesc'),
+        },
+        'dialogHeight': {
+            value: 500,
+            type: SettingItemType.Int,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('dialogHeightLabel'),
+            description: _('dialogHeightDesc'),
+        },
         'copyNoteBeforeSend': {
             value: true,
             type: SettingItemType.Bool,
