@@ -196,7 +196,7 @@ async function executeWebhook(webhook: Webhook) {
                     } else {
                         // Mobile: editor commands not supported, write directly to DB
                         if (isSelectedText) {
-                            await joplin.views.dialogs.showMessageBox('Replacing selected text on mobile is currently not supported via API. Please copy to clipboard and paste manually.');
+                            await joplin.views.dialogs.showMessageBox(_('errorMobileReplaceUnsupported'));
                         } else {
                             await joplin.data.put(['notes', note.id], null, { body: rawResponse });
                         }
@@ -237,7 +237,7 @@ async function executeWebhook(webhook: Webhook) {
             // 모바일 지원 여부 체크 (Joplin 리소스 생성 API는 로컬 path를 요구함)
             const versionInfo = await joplin.versionInfo();
             if (versionInfo.platform !== 'desktop') {
-                await joplin.views.dialogs.showMessageBox('모바일 기기에서는 파일 다운로드 및 리소스 직접 생성을 지원하지 않습니다.');
+                await joplin.views.dialogs.showMessageBox(_('errorMobileFileUnsupported'));
                 return;
             }
 
@@ -478,7 +478,7 @@ async function registerBaseCommands() {
                     await updateDynamicMenu();
                     const newWebhooks = await joplin.settings.value('webhooks');
                     if (prevWebhooks !== newWebhooks) {
-                        await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges', '웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요.'));
+                        await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges'));
                     }
                 });
             },
@@ -493,6 +493,7 @@ joplin.plugins.register({
 
         // Initialize HTML response dialog
         htmlDialogHandle = await joplin.views.dialogs.create('joplin2n8nHtmlResponse');
+        await joplin.views.dialogs.addScript(htmlDialogHandle, './webview/linkHandler.js');
         await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);
         await joplin.views.dialogs.setFitToContent(htmlDialogHandle, false);
 
@@ -507,7 +508,7 @@ joplin.plugins.register({
                 await updateDynamicMenu();
                 const newWebhooks = await joplin.settings.value('webhooks');
                 if (prevWebhooks !== newWebhooks) {
-                    await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges', '웹훅 설정이 변경되었습니다. 우측 상단 아이콘 및 우클릭 메뉴에 변경사항을 완벽히 적용하려면 Joplin을 재시작해주세요.'));
+                    await joplin.views.dialogs.showMessageBox(_('restartRequiredToApplyUIChanges'));
                 }
             });
         });
