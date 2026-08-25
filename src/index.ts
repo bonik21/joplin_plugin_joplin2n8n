@@ -15,6 +15,20 @@ async function executeWebhook(webhook: Webhook) {
         return;
     }
 
+    let bodyToProcess = note.body;
+    let selectedText = '';
+    try {
+        selectedText = (await joplin.commands.execute('selectedText')) as string;
+    } catch (e) {
+        console.warn('Could not get selected text', e);
+    }
+    
+    let isSelectedText = false;
+    if (selectedText && selectedText.length > 0) {
+        bodyToProcess = selectedText;
+        isSelectedText = true;
+    }
+
     const copyNoteBeforeSend = await joplin.settings.value('copyNoteBeforeSend');
     if (copyNoteBeforeSend) {
         try {
@@ -39,13 +53,13 @@ async function executeWebhook(webhook: Webhook) {
         const resourceRegex = /\(:\/([a-f0-9]{32})\)/gi;
         const resourceIds = new Set<string>();
         let match;
-        while ((match = resourceRegex.exec(note.body)) !== null) {
+        while ((match = resourceRegex.exec(bodyToProcess)) !== null) {
             resourceIds.add(match[1]);
         }
 
         // Use standard FormData — works on both desktop and mobile
         const formData = new FormData();
-        let modifiedBody = note.body;
+        let modifiedBody = bodyToProcess;
 
         for (const id of resourceIds) {
             try {
@@ -73,11 +87,15 @@ async function executeWebhook(webhook: Webhook) {
             }
         }
 
-        note.body = modifiedBody;
+        if (!isSelectedText) {
+            note.body = modifiedBody;
+        }
 
         // Add note fields as text parts
         for (const [key, value] of Object.entries(note)) {
-            if (typeof value === 'object' || Array.isArray(value)) {
+            if (key === 'body') {
+                formData.append(key, modifiedBody);
+            } else if (typeof value === 'object' || Array.isArray(value)) {
                 formData.append(key, JSON.stringify(value));
             } else {
                 formData.append(key, String(value));
@@ -169,11 +187,19 @@ async function executeWebhook(webhook: Webhook) {
                     const versionInfo = await joplin.versionInfo();
                     if (versionInfo.platform === 'desktop') {
                         // Desktop: use editor command so Ctrl+Z (undo) works
-                        await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
-                        await joplin.commands.execute('replaceSelection', rawResponse);
+                        if (isSelectedText) {
+                            await joplin.commands.execute('replaceSelection', rawResponse);
+                        } else {
+                            await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
+                            await joplin.commands.execute('replaceSelection', rawResponse);
+                        }
                     } else {
                         // Mobile: editor commands not supported, write directly to DB
-                        await joplin.data.put(['notes', note.id], null, { body: rawResponse });
+                        if (isSelectedText) {
+                            await joplin.views.dialogs.showMessageBox('Replacing selected text on mobile is currently not supported via API. Please copy to clipboard and paste manually.');
+                        } else {
+                            await joplin.data.put(['notes', note.id], null, { body: rawResponse });
+                        }
                     }
                 } else {
                     await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
@@ -310,6 +336,16 @@ export async function updateDynamicMenu() {
 
     // Always add the settings command
     menuItems.push({ commandName: 'joplin2n8n.openManager' });
+
+    // Editor Context Menu — Use the integrated send dialog for selected text
+    const versionInfoForMenu = await joplin.versionInfo();
+    if (showInContextMenu && versionInfoForMenu.platform === 'desktop') {
+        try {
+            await joplin.views.menuItems.create(`${mobileSendCmdId}_ctx_editor`, mobileSendCmdId, MenuItemLocation.EditorContextMenu);
+        } catch (e) {
+            console.warn('Could not add to EditorContextMenu:', e);
+        }
+    }
 
     // Tools menu — only register if setting is enabled (always include settings command)
     if (showInToolsMenu && menuItems.length > 0) {
