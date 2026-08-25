@@ -263,14 +263,7 @@ export async function updateDynamicMenu() {
                 }
             }
 
-            // Note toolbar — only register if setting is enabled
-            if (showInNoteToolbar) {
-                try {
-                    await joplin.views.toolbarButtons.create(`${commandId}_tb`, commandId, ToolbarButtonLocation.NoteToolbar);
-                } catch (e) {
-                    console.warn(e);
-                }
-            }
+            // Note toolbar button registration has been moved to use an integrated button
         }
 
         menuItems.push({ commandName: commandId });
@@ -329,6 +322,14 @@ export async function updateDynamicMenu() {
     if (showInEditorToolbar) {
         try {
             await joplin.views.toolbarButtons.create(`${mobileSendCmdId}_etb`, mobileSendCmdId, ToolbarButtonLocation.EditorToolbar);
+        } catch (e) {
+            console.warn(e);
+        }
+    }
+
+    if (showInNoteToolbar) {
+        try {
+            await joplin.views.toolbarButtons.create(`${mobileSendCmdId}_ntb`, mobileSendCmdId, ToolbarButtonLocation.NoteToolbar);
         } catch (e) {
             console.warn(e);
         }
