@@ -35,6 +35,18 @@ function showToast(message, isError) {
     }, 3000);
 }
 
+function getTranslations() {
+    const el = document.getElementById('linkHandlerTranslations');
+    if (el && el.value) {
+        try { return JSON.parse(el.value); } catch(e) {}
+    }
+    // fallback (영어)
+    return {
+        linkCopied: 'Link copied to clipboard. Please open it directly in your browser.',
+        linkCopyFailed: 'Failed to copy link.',
+    };
+}
+
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -51,13 +63,14 @@ function fallbackCopyTextToClipboard(text) {
 
     try {
         const successful = document.execCommand('copy');
+        const t = getTranslations();
         if (successful) {
-            showToast('링크가 클립보드에 복사되었습니다. 브라우저에서 직접 열어주세요.', false);
+            showToast(t.linkCopied, false);
         } else {
-            showToast('링크 복사에 실패했습니다.', true);
+            showToast(t.linkCopyFailed, true);
         }
     } catch (err) {
-        showToast('링크 복사에 실패했습니다.', true);
+        showToast(getTranslations().linkCopyFailed, true);
     }
 
     document.body.removeChild(textArea);
@@ -75,7 +88,7 @@ document.addEventListener('click', function(e) {
         }
         
         navigator.clipboard.writeText(url).then(function() {
-            showToast('링크가 클립보드에 복사되었습니다. 브라우저에서 직접 열어주세요.', false);
+            showToast(getTranslations().linkCopied, false);
         }).catch(function() {
             // 권한이나 포커스 문제로 실패할 경우 fallback 실행
             fallbackCopyTextToClipboard(url);

@@ -61,5 +61,7 @@
   "dialogHeightLabel": "[UI] Webhook Manager Dialog Height",
   "dialogHeightDesc": "Set the maximum height of the webhook list area in pixels. (Default: 500)",
   "moveUp": "Up",
-  "moveDown": "Down"
+  "moveDown": "Down",
+  "linkCopied": "Link copied to clipboard. Please open it directly in your browser.",
+  "linkCopyFailed": "Failed to copy link."
 }

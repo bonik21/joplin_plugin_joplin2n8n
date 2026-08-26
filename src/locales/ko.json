@@ -61,5 +61,7 @@
   "dialogHeightLabel": "[UI] 웹훅 설정 다이얼로그 세로 크기",
   "dialogHeightDesc": "웹훅 목록이 표시될 영역의 최대 높이를 픽셀 단위로 설정합니다. (기본값: 500)",
   "moveUp": "위로",
-  "moveDown": "아래로"
+  "moveDown": "아래로",
+  "linkCopied": "링크가 클립보드에 복사되었습니다. 브라우저에서 직접 열어주세요.",
+  "linkCopyFailed": "링크 복사에 실패했습니다."
 }

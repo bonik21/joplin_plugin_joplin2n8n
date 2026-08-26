@@ -157,6 +157,10 @@ async function executeWebhook(webhook: Webhook) {
                 { id: 'replaceNoteBody', title: _('replaceNoteBody') },
                 { id: 'ok', title: 'OK' },
             ]);
+            const linkHandlerTranslations = JSON.stringify({
+                linkCopied: _('linkCopied'),
+                linkCopyFailed: _('linkCopyFailed'),
+            }).replace(/"/g, '&quot;');
             await joplin.views.dialogs.setHtml(htmlDialogHandle, `
                 <style>
                     html, body {
@@ -175,6 +179,7 @@ async function executeWebhook(webhook: Webhook) {
                         word-break: break-word;
                     }
                 </style>
+                <input type="hidden" id="linkHandlerTranslations" value="${linkHandlerTranslations}">
                 <div id="response-container">${displayHtml}</div>
             `);
             const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
