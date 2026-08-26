@@ -100,6 +100,12 @@ function render(scrollTop) {
                     <option value="file" ${hook.responseHandling === 'file' ? 'selected' : ''}>${t.responseFile || 'Insert File into Note'}</option>
                 </select>
             </div>
+            ${hook.responseHandling === 'file' ? `
+            <div class="form-group" style="margin-left: 20px; margin-top: -10px;">
+                <label>${t.binaryHeaderKeysLabel || 'Display the following header contents'}</label>
+                <input type="text" data-index="${index}" data-field="binaryHeaderKeys" value="${escapeHtml(hook.binaryHeaderKeys || '')}" placeholder="${t.binaryHeaderKeysPlaceholder || 'e.g., j2n-bin_desc, j2n-bin_by...'}">
+            </div>
+            ` : ''}
             <div class="form-group">
                 <label>${t.attachmentHandling || 'Markdown Attachment Links'}</label>
                 <select data-index="${index}" data-field="attachmentHandling">
@@ -179,7 +185,7 @@ function render(scrollTop) {
             if (index !== null && field) {
                 const idx = parseInt(index, 10);
                 webhooks[idx][field] = e.target.value;
-                if (field === 'authType') {
+                if (field === 'authType' || field === 'responseHandling') {
                     render();
                 }
                 updateHiddenInput();

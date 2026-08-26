@@ -77,6 +77,38 @@ function fallbackCopyTextToClipboard(text) {
 }
 
 document.addEventListener('click', function(e) {
+    const headerBox = e.target.closest('#header-box');
+    if (headerBox) {
+        let textToCopy = headerBox.innerText || headerBox.textContent;
+        // fallbackCopyTextToClipboard will handle showing the toast, but we need to change what it shows.
+        // Wait, fallbackCopyTextToClipboard uses getTranslations().linkCopied. 
+        // We want headerCopySuccess instead.
+        // I will write a small custom copy block here since it's cleaner.
+        
+        const textArea = document.createElement("textarea");
+        textArea.value = textToCopy;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            const successful = document.execCommand('copy');
+            const t = getTranslations();
+            if (successful) {
+                showToast(t.headerCopySuccess || 'Copied successfully', false);
+            } else {
+                showToast(t.headerCopyFailed || 'Failed to copy', true);
+            }
+        } catch (err) {
+            showToast(getTranslations().headerCopyFailed || 'Failed to copy', true);
+        }
+        document.body.removeChild(textArea);
+        return;
+    }
+
     const target = e.target.closest('a');
     if (target && target.href) {
         e.preventDefault();

@@ -37,6 +37,8 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         delete: _('delete'),
         moveUp: _('moveUp'),
         moveDown: _('moveDown'),
+        binaryHeaderKeysLabel: _('binaryHeaderKeysLabel'),
+        binaryHeaderKeysPlaceholder: _('binaryHeaderKeysPlaceholder'),
     };
     
     function escapeHtml(unsafe: string) {

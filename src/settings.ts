@@ -11,6 +11,7 @@ export interface Webhook {
     basicPass?: string;
     headerAuth?: string;
     responseHandling: 'status' | 'text' | 'html' | 'file';
+    binaryHeaderKeys?: string;
     attachmentHandling: 'keep_id' | 'replace_name';
 }
 

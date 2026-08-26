@@ -168,6 +168,9 @@ async function executeWebhook(webhook: Webhook) {
                         padding: 0;
                         height: 100%;
                         box-sizing: border-box;
+                        font-family: var(--joplin-font-family, sans-serif);
+                        font-size: var(--joplin-note-viewer-font-size, 15px);
+                        color: var(--joplin-color, #333);
                     }
                     #response-container {
                         padding: 10px;
@@ -213,16 +216,90 @@ async function executeWebhook(webhook: Webhook) {
 
         } else if (webhook.responseHandling === 'file') {
             // --- File insertion mode ---
-            // Determine filename from Content-Disposition header, or fallback
+            const versionInfo = await joplin.versionInfo();
+            if (versionInfo.platform !== 'desktop') {
+                await joplin.views.dialogs.showMessageBox(_('errorMobileFileUnsupported'));
+                return;
+            }
+
+            // 1. Header parsing
+            const headerKeysInput = webhook.binaryHeaderKeys === undefined ? 'all' : webhook.binaryHeaderKeys.trim();
+            
+            const escapeHtml = (unsafe: string) => {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            };
+
+            const safeDecode = (val: string) => {
+                try {
+                    return val.includes('%') ? decodeURIComponent(val) : val;
+                } catch (e) {
+                    return val;
+                }
+            };
+
+            let extractedHeadersHtml = '';
+
+            if (headerKeysInput === 'all_json') {
+                const allHeaders: Record<string, string> = {};
+                response.headers.forEach((value, key) => {
+                    allHeaders[key] = safeDecode(value);
+                });
+                extractedHeadersHtml = `<pre style="margin:0;">${escapeHtml(JSON.stringify(allHeaders, null, 2))}</pre>`;
+            } else if (headerKeysInput === 'all') {
+                const allHeaders: string[] = [];
+                response.headers.forEach((value, key) => {
+                    allHeaders.push(`<b>${escapeHtml(key)}</b>: ${escapeHtml(safeDecode(value))}`);
+                });
+                extractedHeadersHtml = allHeaders.join('<br>');
+            } else {
+                const keys = headerKeysInput.split(',').map(k => k.trim()).filter(k => k);
+                const foundHeaders: string[] = [];
+                for (const key of keys) {
+                    const val = response.headers.get(key.toLowerCase());
+                    if (val !== null) {
+                        foundHeaders.push(`<b>${escapeHtml(key)}</b>: ${escapeHtml(safeDecode(val))}`);
+                    }
+                }
+                if (foundHeaders.length > 0) {
+                    extractedHeadersHtml = foundHeaders.join('<br>');
+                } else {
+                    extractedHeadersHtml = `<div style="color: var(--joplin-color-faded, #666); font-style: italic;">(No matching headers found)</div>`;
+                }
+            }
+
+            const helpText = _('binaryHeaderHelp').split('\n').map(line => escapeHtml(line)).join('<br>');
+            const helpTitle = escapeHtml(_('binaryHeaderHelpTitle') || 'Help: Header Text Options');
+            const headersTitle = escapeHtml(_('binaryHeadersTitle') || 'Headers');
+            
+            const headerHtml = `
+                <details open style="margin-bottom: 15px; border-bottom: 1px solid var(--joplin-divider-color, #e0e0e0); padding-bottom: 10px;">
+                    <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">${helpTitle}</summary>
+                    <div style="color: var(--joplin-color-faded, #666); line-height: 1.5; font-size: 0.9em; margin-top: 5px;">${helpText}</div>
+                </details>
+                <div style="font-weight: bold; margin-bottom: 5px;">${headersTitle}</div>
+                <div class="header-box" id="header-box" title="Click to copy">
+                    ${extractedHeadersHtml || `<div style="color: var(--joplin-color-faded, #666); font-style: italic;">(No matching headers found)</div>`}
+                </div>
+            `;
+
+            // 2. Read binary data
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            // Determine filename and mimetype
             let filename = 'response_file';
             const contentDisposition = response.headers.get('content-disposition');
             if (contentDisposition) {
                 const fnMatch = contentDisposition.match(/filename\*?=['"]*(?:UTF-8'')?([^;"'\n]+)/i);
                 if (fnMatch && fnMatch[1]) {
-                    filename = decodeURIComponent(fnMatch[1].trim());
+                    filename = safeDecode(fnMatch[1].trim());
                 }
             } else {
-                // Try to guess extension from Content-Type
                 const contentType = response.headers.get('content-type') || 'application/octet-stream';
                 const mimeToExt: Record<string, string> = {
                     'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif',
@@ -239,76 +316,109 @@ async function executeWebhook(webhook: Webhook) {
             const mimeType = contentType.split(';')[0].trim();
             const isImage = mimeType.startsWith('image/');
 
-            // 모바일 지원 여부 체크 (Joplin 리소스 생성 API는 로컬 path를 요구함)
-            const versionInfo = await joplin.versionInfo();
-            if (versionInfo.platform !== 'desktop') {
-                await joplin.views.dialogs.showMessageBox(_('errorMobileFileUnsupported'));
+            // 3. Show Dialog
+            await joplin.views.dialogs.setButtons(htmlDialogHandle, [
+                { id: 'insertTop', title: _('binaryInsertTop') },
+                { id: 'insertCursor', title: _('binaryInsertCursor') },
+                { id: 'insertBottom', title: _('binaryInsertBottom') },
+                { id: 'cancel', title: _('cancel') },
+            ]);
+
+            const linkHandlerTranslations = JSON.stringify({
+                headerCopySuccess: _('headerCopySuccess'),
+                headerCopyFailed: _('headerCopyFailed'),
+            }).replace(/"/g, '&quot;');
+
+            await joplin.views.dialogs.setHtml(htmlDialogHandle, `
+                <style>
+                    html, body { 
+                        margin: 0; 
+                        padding: 0; 
+                        height: 100%; 
+                        box-sizing: border-box; 
+                        font-family: var(--joplin-font-family, sans-serif);
+                        font-size: var(--joplin-note-viewer-font-size, 15px);
+                        color: var(--joplin-color, #333);
+                    }
+                    #response-container { padding: 15px; min-width: 600px; box-sizing: border-box; line-height: 1.5; }
+                    .header-box {
+                        background: var(--joplin-background-color3, #f5f5f5);
+                        border: 1px solid var(--joplin-divider-color, #e0e0e0);
+                        border-radius: 4px;
+                        padding: 10px;
+                        margin-bottom: 15px;
+                        cursor: pointer;
+                        user-select: text;
+                        word-break: break-word;
+                    }
+                    .header-box:hover {
+                        background: var(--joplin-background-color-hover3, #eeeeee);
+                    }
+                    .status-msg { margin-top: 10px; font-weight: bold; }
+                </style>
+                <input type="hidden" id="linkHandlerTranslations" value="${linkHandlerTranslations}">
+                <div id="response-container">
+                    ${headerHtml}
+                    <div style="font-weight: bold; margin-bottom: 5px; margin-top: 15px;">File Information</div>
+                    <div>
+                        <b>Filename:</b> ${escapeHtml(filename)}<br>
+                        <b>Type:</b> ${escapeHtml(mimeType)}
+                    </div>
+                </div>
+            `);
+
+            const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
+            if (dlgResult.id === 'cancel' || !dlgResult.id) {
                 return;
             }
 
-            // PC 환경: fs 및 os 모듈을 사용하여 임시 파일 생성 후 업로드
-            const os = require('os');
-            const path = require('path');
-            const fs = require('fs-extra');
-
-            const tempFilePath = path.join(os.tmpdir(), `joplin2n8n_${Date.now()}_${filename}`);
-            
-            // Read binary
-            const arrayBuffer = await response.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            
-            // Write to temp file
-            fs.writeFileSync(tempFilePath, buffer);
-
-            let resource;
             try {
-                // Create Joplin resource from local file path
-                resource = await joplin.data.post(
-                    ['resources'],
-                    null,
-                    { title: filename, mime: mimeType },
-                    [{ path: tempFilePath }]
-                );
-            } finally {
-                // Remove temp file regardless of success
-                fs.removeSync(tempFilePath);
-            }
+                // 4. Create resource
+                const os = require('os');
+                const path = require('path');
+                const fs = require('fs-extra');
+                const tempFilePath = path.join(os.tmpdir(), `joplin2n8n_${Date.now()}_${filename}`);
+                fs.writeFileSync(tempFilePath, buffer);
 
-            if (!resource || !resource.id) {
-                throw new Error('Resource creation failed: no resource ID returned');
-            }
-
-            // Build markdown link
-            const mdLink = isImage
-                ? `![${filename}](:/${resource.id})`
-                : `[${filename}](:/${resource.id})`;
-
-            // Insert at cursor (desktop only) or append to note end
-            let insertedAtCursor = false;
-
-            if (versionInfo.platform === 'desktop') {
+                let resource;
                 try {
-                    // replaceSelection inserts at cursor if nothing is selected
+                    resource = await joplin.data.post(
+                        ['resources'],
+                        null,
+                        { title: filename, mime: mimeType },
+                        [{ path: tempFilePath }]
+                    );
+                } finally {
+                    fs.removeSync(tempFilePath);
+                }
+
+                if (!resource || !resource.id) {
+                    throw new Error('Resource creation failed');
+                }
+
+                const mdLink = isImage
+                    ? `![${filename}](:/${resource.id})`
+                    : `[${filename}](:/${resource.id})`;
+
+                // 5. Insert into note
+                if (dlgResult.id === 'insertCursor') {
                     await joplin.commands.execute('replaceSelection', '\n' + mdLink + '\n');
-                    insertedAtCursor = true;
-                } catch (e) {
-                    console.warn('Could not insert at cursor, appending to end', e);
+                } else {
+                    const currentNote = await joplin.workspace.selectedNote();
+                    if (currentNote && currentNote.id === note.id) {
+                        if (dlgResult.id === 'insertTop') {
+                            const newBody = mdLink + '\n\n' + (currentNote.body || '');
+                            await joplin.data.put(['notes', note.id], null, { body: newBody });
+                        } else if (dlgResult.id === 'insertBottom') {
+                            const newBody = (currentNote.body || '').trimEnd() + '\n\n' + mdLink + '\n';
+                            await joplin.data.put(['notes', note.id], null, { body: newBody });
+                        }
+                    }
                 }
+                // Success: Dialog closes, no extra message box.
+            } catch (err: any) {
+                await joplin.views.dialogs.showMessageBox(_('binaryFailed', err.message || String(err)));
             }
-
-            if (!insertedAtCursor) {
-                // Append to note end (mobile or cursor insertion failed)
-                const currentNote = await joplin.workspace.selectedNote();
-                if (currentNote && currentNote.id === note.id) {
-                    const newBody = (currentNote.body || '').trimEnd() + '\n\n' + mdLink + '\n';
-                    await joplin.data.put(['notes', note.id], null, { body: newBody });
-                }
-            }
-
-            const successMsg = insertedAtCursor
-                ? _('fileInsertedAtCursor', filename)
-                : _('fileInsertedAtEnd', filename);
-            await joplin.views.dialogs.showMessageBox(successMsg);
 
         } else {
             if (response.ok) {

@@ -63,5 +63,17 @@
   "moveUp": "Up",
   "moveDown": "Down",
   "linkCopied": "Link copied to clipboard. Please open it directly in your browser.",
-  "linkCopyFailed": "Failed to copy link."
+  "linkCopyFailed": "Failed to copy link.",
+  "binaryHeaderKeysLabel": "Display the following header contents",
+  "binaryHeaderKeysPlaceholder": "e.g., all, content-type, content-length...",
+  "binaryInsertTop": "Insert file at the beginning",
+  "binaryInsertCursor": "Insert file at cursor",
+  "binaryInsertBottom": "Insert file at the end",
+  "binaryHeaderHelpTitle": "Help: Header Text Options",
+  "binaryHeadersTitle": "Headers",
+  "binaryHeaderHelp": "- Enter `all (default)` in 'Display the following header contents' to output all headers in Key: Value format.\n- Enter `all_json` to output all headers in JSON format.\n- To display only specific fields, enter all desired Keys separated by commas in 'Display the following header contents'.\n- You can add custom headers in N8N. For binary responses, go to the 'Respond to Webhook' node's header settings and enter the desired Key and Value.\n\n⚠️ Non-English text (e.g., Korean) is dropped during network transmission. You must use N8N's `.urlEncode()` function.\n(e.g., `{{ $json.item.desc.urlEncode() }}` or `{{ 'File description.'.urlEncode() }}`)",
+  "binarySuccess": "File inserted successfully",
+  "binaryFailed": "Failed to insert file: %s",
+  "headerCopySuccess": "Header text copied to clipboard",
+  "headerCopyFailed": "Failed to copy header text"
 }
