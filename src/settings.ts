@@ -96,6 +96,22 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
             label: isDesktop ? _('showInEditorToolbarLabel') : _('showInEditorToolbarLabelMobile'),
             description: isDesktop ? _('showInEditorToolbarDesc') : _('showInEditorToolbarDescMobile'),
         },
+        'customDeviceName': {
+            value: '',
+            type: SettingItemType.String,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('customDeviceNameLabel'),
+            description: _('customDeviceNameDesc'),
+        },
+        'customProfileName': {
+            value: '',
+            type: SettingItemType.String,
+            section: 'joplin2n8n',
+            public: true,
+            label: _('customProfileNameLabel'),
+            description: _('customProfileNameDesc'),
+        },
     });
 
     await joplin.settings.onChange(async (event) => {

@@ -8,6 +8,207 @@ const registeredCommandIds = new Set<string>();
 let htmlDialogHandle = '';
 let sendDialogHandle = '';
 
+export interface JoplinInfo {
+    platform: string;
+    os: string;
+    version: string;
+    device: string;
+    profile: string;
+}
+
+async function getJoplinInfo(): Promise<JoplinInfo> {
+    let platform = 'unknown';
+    let version = 'unknown';
+
+    try {
+        const vInfo = await joplin.versionInfo();
+        if (vInfo) {
+            platform = vInfo.platform || 'unknown';
+            version = vInfo.version || 'unknown';
+        }
+    } catch (e) {
+        console.warn('Could not fetch versionInfo', e);
+    }
+
+    // Determine OS
+    let os = 'unknown';
+    if (typeof process !== 'undefined' && process.platform) {
+        switch (process.platform) {
+            case 'win32': os = 'Windows'; break;
+            case 'darwin': os = 'macOS'; break;
+            case 'linux': os = 'Linux'; break;
+            case 'android': os = 'Android'; break;
+            default: os = process.platform;
+        }
+    }
+
+    if (os === 'unknown' && typeof navigator !== 'undefined' && navigator.userAgent) {
+        const ua = navigator.userAgent;
+        if (/Android/i.test(ua)) os = 'Android';
+        else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+        else if (/Windows/i.test(ua)) os = 'Windows';
+        else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS';
+        else if (/Linux/i.test(ua)) os = 'Linux';
+    }
+
+    // Determine Device Name
+    let device = '';
+    try {
+        const customDevice = await joplin.settings.value('customDeviceName');
+        if (customDevice && typeof customDevice === 'string' && customDevice.trim() !== '') {
+            device = customDevice.trim();
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    // If device name not explicitly configured by user
+    if (!device) {
+        if (platform === 'desktop') {
+            // PC: Auto-detect hostname (BONIK-3570K, etc.)
+            if (typeof process !== 'undefined' && process.env) {
+                device = process.env.COMPUTERNAME || process.env.HOSTNAME || '';
+            }
+            if (!device) {
+                try {
+                    const osMod = joplin.require('os');
+                    if (osMod && typeof osMod.hostname === 'function') {
+                        device = osMod.hostname() || '';
+                    }
+                } catch (e) {
+                    // Ignore
+                }
+            }
+        } else {
+            // Mobile: Default is empty string
+            device = '';
+        }
+    }
+
+    // Determine Profile Name
+    let profile = '';
+    try {
+        const customProfile = await joplin.settings.value('customProfileName');
+        if (customProfile && typeof customProfile === 'string' && customProfile.trim() !== '') {
+            profile = customProfile.trim();
+        }
+    } catch (e) {
+        // Ignore
+    }
+
+    // If profile name not explicitly configured by user
+    if (!profile) {
+        if (platform === 'desktop') {
+            // PC: Auto-detect from profiles.json
+            try {
+                const profileDir = await joplin.settings.globalValue('profileDir');
+                let rootProfileDir = '';
+                try {
+                    rootProfileDir = await joplin.settings.globalValue('rootProfileDir');
+                } catch (e) {
+                    // Ignore
+                }
+
+                const candidatePaths: string[] = [];
+                if (rootProfileDir) {
+                    const normalizedRoot = String(rootProfileDir).replace(/\\/g, '/').replace(/\/+$/, '');
+                    candidatePaths.push(`${normalizedRoot}/profiles.json`);
+                }
+
+                let folderId = '';
+                let lastPart = '';
+                if (profileDir) {
+                    const normalized = String(profileDir).replace(/\\/g, '/').replace(/\/+$/, '');
+                    const parts = normalized.split('/');
+                    lastPart = parts[parts.length - 1] || '';
+                    folderId = lastPart.startsWith('profile-') ? lastPart.substring(8) : lastPart;
+
+                    const parentDir = parts.slice(0, -1).join('/');
+                    const grandParentDir = parts.slice(0, -2).join('/');
+
+                    if (parentDir) candidatePaths.push(`${parentDir}/profiles.json`);
+                    candidatePaths.push(`${normalized}/profiles.json`);
+                    if (grandParentDir) candidatePaths.push(`${grandParentDir}/profiles.json`);
+                }
+
+                let profileConfig: any = null;
+                let fs: any = null;
+                try {
+                    fs = joplin.require('fs-extra');
+                } catch (e) {
+                    try {
+                        fs = require('fs');
+                    } catch (e2) {
+                        // Ignore
+                    }
+                }
+
+                for (const cPath of candidatePaths) {
+                    if (profileConfig) break;
+                    if (fs) {
+                        try {
+                            if (fs.existsSync(cPath)) {
+                                const raw = fs.readFileSync(cPath, 'utf8');
+                                profileConfig = JSON.parse(raw.replace(/^\uFEFF/, ''));
+                                break;
+                            }
+                        } catch (e) {
+                            // Ignore
+                        }
+                    }
+
+                    // Fallback to file:// fetch
+                    try {
+                        const fileUrl = cPath.startsWith('/') ? `file://${cPath}` : `file:///${cPath}`;
+                        const res = await fetch(fileUrl);
+                        if (res.ok) {
+                            const raw = await res.text();
+                            profileConfig = JSON.parse(raw.replace(/^\uFEFF/, ''));
+                            break;
+                        }
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+
+                if (profileConfig && Array.isArray(profileConfig.profiles)) {
+                    const currentId = profileConfig.currentProfileId || folderId;
+                    const matched = profileConfig.profiles.find((p: any) => 
+                        p.id === folderId || 
+                        p.id === currentId || 
+                        (folderId && p.id && folderId.includes(p.id)) ||
+                        (p.id === 'default' && (lastPart.toLowerCase().includes('joplin') || lastPart === '.joplin'))
+                    );
+                    if (matched && matched.name) {
+                        profile = matched.name;
+                    } else if (folderId && folderId !== 'joplin-desktop' && folderId !== '.joplin') {
+                        profile = folderId;
+                    }
+                } else if (lastPart) {
+                    if (lastPart.toLowerCase().includes('joplin') || lastPart === '.joplin') {
+                        profile = 'default';
+                    } else {
+                        profile = folderId || '';
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not fetch profileDir or profile name', e);
+            }
+        } else {
+            // Mobile: Default is empty string if not configured
+            profile = '';
+        }
+    }
+
+    return {
+        platform,
+        os,
+        version,
+        device,
+        profile,
+    };
+}
+
 async function executeWebhook(webhook: Webhook) {
     const note = await joplin.workspace.selectedNote();
     if (!note) {
@@ -128,6 +329,10 @@ async function executeWebhook(webhook: Webhook) {
             }
         }
         formData.append('notebook', notebookNames.join('|'));
+
+        // Joplin Environment Info
+        const joplinInfo = await getJoplinInfo();
+        formData.append('joplin_info', JSON.stringify(joplinInfo));
 
         // Do NOT set Content-Type manually — fetch sets it automatically with the correct boundary
         const response = await fetch(webhook.url, {

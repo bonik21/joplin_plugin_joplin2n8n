@@ -75,5 +75,9 @@
   "binarySuccess": "File inserted successfully",
   "binaryFailed": "Failed to insert file: %s",
   "headerCopySuccess": "Header text copied to clipboard",
-  "headerCopyFailed": "Failed to copy header text"
+  "headerCopyFailed": "Failed to copy header text",
+  "customDeviceNameLabel": "[Environment] Device Name",
+  "customDeviceNameDesc": "Specify the device name sent to the webhook. (Default: Auto-detected on PC, empty string on Mobile)",
+  "customProfileNameLabel": "[Environment] Profile Name",
+  "customProfileNameDesc": "Specify the profile name sent to the webhook. (Default: Auto-detected on PC, empty string on Mobile)"
 }

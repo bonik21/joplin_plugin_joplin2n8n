@@ -75,5 +75,9 @@
   "binarySuccess": "파일 삽입 성공",
   "binaryFailed": "파일 삽입 실패: %s",
   "headerCopySuccess": "헤더 텍스트 복사 성공",
-  "headerCopyFailed": "헤더 텍스트 복사 실패"
+  "headerCopyFailed": "헤더 텍스트 복사 실패",
+  "customDeviceNameLabel": "[환경 정보] 기기 이름 (Device Name)",
+  "customDeviceNameDesc": "웹훅으로 전송할 기기 이름을 지정합니다. (기본값: 빈칸 시 PC는 자동 감지, 모바일은 빈 문자열)",
+  "customProfileNameLabel": "[환경 정보] 프로필 이름 (Profile Name)",
+  "customProfileNameDesc": "웹훅으로 전송할 프로필 이름을 지정합니다. (기본값: 빈칸 시 PC는 자동 감지, 모바일은 빈 문자열)"
 }
