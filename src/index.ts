@@ -173,9 +173,9 @@ async function getJoplinInfo(): Promise<JoplinInfo> {
 
                 if (profileConfig && Array.isArray(profileConfig.profiles)) {
                     const currentId = profileConfig.currentProfileId || folderId;
-                    const matched = profileConfig.profiles.find((p: any) => 
-                        p.id === folderId || 
-                        p.id === currentId || 
+                    const matched = profileConfig.profiles.find((p: any) =>
+                        p.id === folderId ||
+                        p.id === currentId ||
                         (folderId && p.id && folderId.includes(p.id)) ||
                         (p.id === 'default' && (lastPart.toLowerCase().includes('joplin') || lastPart === '.joplin'))
                     );
@@ -223,7 +223,7 @@ async function executeWebhook(webhook: Webhook) {
     } catch (e) {
         console.warn('Could not get selected text', e);
     }
-    
+
     let isSelectedText = false;
     if (selectedText && selectedText.length > 0) {
         bodyToProcess = selectedText;
@@ -234,7 +234,15 @@ async function executeWebhook(webhook: Webhook) {
     if (copyNoteBeforeSend) {
         try {
             await joplin.clipboard.writeText(note.body);
-            await joplin.views.dialogs.showToast({ message: _('noteBodyCopiedToClipboard'), type: ToastType.Info });
+            const toastDuration = 3000;
+            await joplin.views.dialogs.showToast({ message: _('noteBodyCopiedToClipboard'), type: ToastType.Success, timestamp: Date.now(), duration: toastDuration });
+            // Joplin이 화면 복귀 시 마지막 toast를 재표시하는 현상 방지:
+            // toast가 사라진 직후 빈 toast로 내부 상태를 덮어씀.
+            setTimeout(async () => {
+                try {
+                    await joplin.views.dialogs.showToast({ message: '', duration: 1, timestamp: Date.now() });
+                } catch (_e) { /* Ignore */ }
+            }, toastDuration + 100);
         } catch (e) {
             console.warn('Failed to copy note body to clipboard', e);
         }
@@ -344,7 +352,7 @@ async function executeWebhook(webhook: Webhook) {
 
         if (webhook.responseHandling === 'text' || webhook.responseHandling === 'html') {
             const rawResponse = await response.text();
-            
+
             let displayHtml = rawResponse;
             if (webhook.responseHandling === 'text') {
                 const escapeHtml = (unsafe: string) => {
@@ -430,7 +438,7 @@ async function executeWebhook(webhook: Webhook) {
 
             // 1. Header parsing
             const headerKeysInput = webhook.binaryHeaderKeys === undefined ? 'all' : webhook.binaryHeaderKeys.trim();
-            
+
             const escapeHtml = (unsafe: string) => {
                 return unsafe
                     .replace(/&/g, "&amp;")
@@ -481,7 +489,7 @@ async function executeWebhook(webhook: Webhook) {
             const helpText = _('binaryHeaderHelp').split('\n').map(line => escapeHtml(line)).join('<br>');
             const helpTitle = escapeHtml(_('binaryHeaderHelpTitle') || 'Help: Header Text Options');
             const headersTitle = escapeHtml(_('binaryHeadersTitle') || 'Headers');
-            
+
             const headerHtml = `
                 <details open style="margin-bottom: 15px; border-bottom: 1px solid var(--joplin-divider-color, #e0e0e0); padding-bottom: 10px;">
                     <summary style="cursor: pointer; font-weight: bold; margin-bottom: 10px;">${helpTitle}</summary>
@@ -738,7 +746,7 @@ export async function updateDynamicMenu() {
         });
         registeredCommandIds.add(mobileSendCmdId);
     }
-    
+
     if (showInEditorToolbar) {
         try {
             await joplin.views.toolbarButtons.create(`${mobileSendCmdId}_etb`, mobileSendCmdId, ToolbarButtonLocation.EditorToolbar);
