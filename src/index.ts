@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
+import { MenuItemLocation, ToolbarButtonLocation, ToastType } from 'api/types';
 import { initI18n, _ } from './i18n';
 import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
@@ -234,6 +234,7 @@ async function executeWebhook(webhook: Webhook) {
     if (copyNoteBeforeSend) {
         try {
             await joplin.clipboard.writeText(note.body);
+            await joplin.views.dialogs.showToast({ message: _('noteBodyCopiedToClipboard'), type: ToastType.Info });
         } catch (e) {
             console.warn('Failed to copy note body to clipboard', e);
         }

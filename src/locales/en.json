@@ -79,5 +79,6 @@
   "customDeviceNameLabel": "[Environment] Device Name",
   "customDeviceNameDesc": "Specify the device name sent to the webhook. (Default: Auto-detected on PC, empty string on Mobile)",
   "customProfileNameLabel": "[Environment] Profile Name",
-  "customProfileNameDesc": "Specify the profile name sent to the webhook. (Default: Auto-detected on PC, empty string on Mobile)"
+  "customProfileNameDesc": "Specify the profile name sent to the webhook. (Default: Auto-detected on PC, empty string on Mobile)",
+  "noteBodyCopiedToClipboard": "Note body copied to clipboard."
 }

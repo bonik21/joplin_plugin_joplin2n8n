@@ -1,4 +1,4 @@
-function showToast(message, isError) {
+function showWebviewToast(message, isError) {
     let toast = document.getElementById('joplin2n8n-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -65,12 +65,12 @@ function fallbackCopyTextToClipboard(text) {
         const successful = document.execCommand('copy');
         const t = getTranslations();
         if (successful) {
-            showToast(t.linkCopied, false);
+            showWebviewToast(t.linkCopied, false);
         } else {
-            showToast(t.linkCopyFailed, true);
+            showWebviewToast(t.linkCopyFailed, true);
         }
     } catch (err) {
-        showToast(getTranslations().linkCopyFailed, true);
+        showWebviewToast(getTranslations().linkCopyFailed, true);
     }
 
     document.body.removeChild(textArea);
@@ -98,12 +98,12 @@ document.addEventListener('click', function(e) {
             const successful = document.execCommand('copy');
             const t = getTranslations();
             if (successful) {
-                showToast(t.headerCopySuccess || 'Copied successfully', false);
+                showWebviewToast(t.headerCopySuccess || 'Copied successfully', false);
             } else {
-                showToast(t.headerCopyFailed || 'Failed to copy', true);
+                showWebviewToast(t.headerCopyFailed || 'Failed to copy', true);
             }
         } catch (err) {
-            showToast(getTranslations().headerCopyFailed || 'Failed to copy', true);
+            showWebviewToast(getTranslations().headerCopyFailed || 'Failed to copy', true);
         }
         document.body.removeChild(textArea);
         return;
@@ -120,7 +120,7 @@ document.addEventListener('click', function(e) {
         }
         
         navigator.clipboard.writeText(url).then(function() {
-            showToast(getTranslations().linkCopied, false);
+            showWebviewToast(getTranslations().linkCopied, false);
         }).catch(function() {
             // 권한이나 포커스 문제로 실패할 경우 fallback 실행
             fallbackCopyTextToClipboard(url);
