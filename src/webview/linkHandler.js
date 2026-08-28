@@ -130,43 +130,64 @@ document.addEventListener('click', function(e) {
 
 function applyButtonWrapStyle() {
     try {
-        const targets = [document];
-        if (window.parent && window.parent.document && window.parent.document !== document) {
-            targets.push(window.parent.document);
-        }
-        if (window.top && window.top.document && !targets.includes(window.top.document)) {
-            targets.push(window.top.document);
-        }
+        const parentDoc = window.parent && window.parent.document;
+        if (!parentDoc || parentDoc === document) return;
 
-        targets.forEach(doc => {
-            const buttonBars = doc.querySelectorAll('.modal-footer, .button-bar, div[class*="button-bar"], div[class*="buttonBar"], div[class*="modal-footer"], div[class*="buttons"]');
-            buttonBars.forEach(bar => {
-                bar.style.display = 'flex';
-                bar.style.flexWrap = 'wrap';
-                bar.style.gap = '6px';
-                bar.style.justifyContent = 'flex-end';
-
-                const buttons = bar.querySelectorAll('button');
-                buttons.forEach(btn => {
-                    btn.style.whiteSpace = 'normal';
-                    btn.style.height = 'auto';
-                    btn.style.minHeight = '30px';
-                    btn.style.lineHeight = '1.3';
-                    btn.style.padding = '6px 12px';
-                });
-            });
-        });
+        // <style> 태그를 parent document에 한 번만 주입
+        if (!parentDoc.getElementById('joplin2n8n-btn-wrap-style')) {
+            const style = parentDoc.createElement('style');
+            style.id = 'joplin2n8n-btn-wrap-style';
+            style.textContent = [
+                '.user-dialog-button-bar {',
+                '    display: flex !important;',
+                '    flex-wrap: wrap !important;',
+                '    justify-content: flex-end !important;',
+                '    gap: 6px !important;',
+                '    padding: 4px 8px !important;',
+                '    box-sizing: border-box !important;',
+                '}',
+                '.user-dialog-button-bar button {',
+                '    white-space: normal !important;',
+                '    height: auto !important;',
+                '    min-height: 32px !important;',
+                '    line-height: 1.3 !important;',
+                '    flex-shrink: 0 !important;',
+                '    max-width: 100% !important;',
+                '    word-break: break-word !important;',
+                '}',
+            ].join('\n');
+            (parentDoc.head || parentDoc.documentElement).appendChild(style);
+        }
     } catch (e) {
-        // Ignore cross-origin error if any
+        // parent document 접근 불가 시 무시
     }
 }
 
+// 초기 적용
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', applyButtonWrapStyle);
 } else {
     applyButtonWrapStyle();
 }
 setTimeout(applyButtonWrapStyle, 100);
-setTimeout(applyButtonWrapStyle, 300);
-setTimeout(applyButtonWrapStyle, 800);
+setTimeout(applyButtonWrapStyle, 400);
 
+// MutationObserver: parent document에 버튼 바가 추가될 때마다 재적용
+(function watchButtonBar() {
+    try {
+        const parentDoc = window.parent && window.parent.document;
+        if (!parentDoc || parentDoc === document) return;
+
+        const observer = new MutationObserver(function() {
+            applyButtonWrapStyle();
+        });
+        const root = parentDoc.body || parentDoc.documentElement;
+        if (root) {
+            observer.observe(root, { childList: true, subtree: true });
+            // 5초 후 자동 해제 (다이얼로그 열린 후 변동 없으므로)
+            setTimeout(function() { observer.disconnect(); }, 5000);
+        }
+    } catch (e) {
+        // Ignore
+    }
+})();

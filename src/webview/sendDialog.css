@@ -1,0 +1,59 @@
+body {
+    min-width: 500px;
+    margin: 0;
+    padding: 0;
+}
+
+.send-dialog {
+    font-family: var(--joplin-font-family);
+    color: var(--joplin-color);
+    background: var(--joplin-background-color);
+    padding: 16px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--joplin-color);
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+.webhook-select {
+    width: 100%;
+    font-family: var(--joplin-font-family);
+    font-size: 14px;
+    border: 1px solid var(--joplin-divider-color);
+    border-radius: 4px;
+    background: var(--joplin-background-color);
+    color: var(--joplin-color);
+    box-sizing: border-box;
+    outline: none;
+}
+
+.webhook-select option {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--joplin-divider-color);
+    cursor: pointer;
+}
+
+.webhook-select option:last-child {
+    border-bottom: none;
+}
+
+.webhook-select option:checked {
+    background-color: var(--joplin-selected-color, #007acc) !important;
+    color: var(--joplin-selected-color2, #ffffff) !important;
+}

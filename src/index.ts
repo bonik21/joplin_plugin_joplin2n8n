@@ -3,10 +3,10 @@ import { MenuItemLocation, ToolbarButtonLocation, ToastType } from 'api/types';
 import { initI18n, _ } from './i18n';
 import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
+import { openSendDialog } from './sendDialog';
 
 const registeredCommandIds = new Set<string>();
 let htmlDialogHandle = '';
-let sendDialogHandle = '';
 
 export interface JoplinInfo {
     platform: string;
@@ -736,88 +736,9 @@ export async function updateDynamicMenu() {
             label: _('sendToN8n'),
             iconName: 'fas fa-paper-plane',
             execute: async () => {
-                const currentHooks = await getWebhooks();
-                if (currentHooks.length === 0) {
-                    await joplin.views.dialogs.showMessageBox(_('noWebhooksConfigured'));
-                    return;
-                }
-                if (currentHooks.length === 1) {
-                    await executeWebhook(currentHooks[0]);
-                    return;
-                }
-                let lastUsedWebhookId = '';
-                try {
-                    lastUsedWebhookId = await joplin.settings.value('lastUsedWebhookId');
-                } catch (e) {
-                    // Ignore
-                }
-
-                let optionsHtml = '';
-                for (const hook of currentHooks) {
-                    const isSelected = hook.id === lastUsedWebhookId ? ' selected' : '';
-                    optionsHtml += `<option value="${hook.id}"${isSelected}>${hook.title || 'n8n'}</option>`;
-                }
-                const totalHooks = currentHooks.length;
-                const selectSize = Math.min(totalHooks, 8);
-                const html = `
-                    <style>
-                        html, body {
-                            margin: 0;
-                            padding: 0;
-                            min-width: 400px;
-                        }
-                        .send-form-container {
-                            padding: 10px;
-                            box-sizing: border-box;
-                            min-width: 400px;
-                        }
-                        .webhook-select {
-                            width: 100%;
-                            font-size: 15px;
-                            box-sizing: border-box;
-                            border-radius: 4px;
-                            border: 1px solid var(--joplin-divider-color, #ccc);
-                            background: var(--joplin-background-color, #fff);
-                            color: var(--joplin-color, #333);
-                        }
-                        .webhook-select option {
-                            padding: 8px 10px;
-                        }
-                    </style>
-                    <form name="sendForm">
-                        <div class="send-form-container">
-                            <h3 style="margin-top:0; margin-bottom: 12px;">${_('sendToN8n')}</h3>
-                            <select name="webhookId" class="webhook-select" size="${selectSize}">
-                                ${optionsHtml}
-                            </select>
-                        </div>
-                    </form>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            var sel = document.querySelector('select[name="webhookId"]');
-                            if (sel) {
-                                var selectedOpt = sel.querySelector('option[selected]') || sel.querySelector('option:checked');
-                                if (selectedOpt) {
-                                    selectedOpt.scrollIntoView({ block: 'nearest' });
-                                }
-                                sel.focus();
-                            }
-                        });
-                    </script>
-                `;
-                await joplin.views.dialogs.setHtml(sendDialogHandle, html);
-                await joplin.views.dialogs.setButtons(sendDialogHandle, [
-                    { id: 'ok', title: 'OK' },
-                    { id: 'cancel', title: _('cancel') }
-                ]);
-                const dlgResult = await joplin.views.dialogs.open(sendDialogHandle);
-                if (dlgResult.id === 'ok' && dlgResult.formData && dlgResult.formData.sendForm && dlgResult.formData.sendForm.webhookId) {
-                    const selectedId = dlgResult.formData.sendForm.webhookId;
-                    const hook = currentHooks.find(w => w.id === selectedId);
-                    if (hook) {
-                        await executeWebhook(hook);
-                    }
-                }
+                await openSendDialog(async (hook) => {
+                    await executeWebhook(hook);
+                });
             }
         });
         registeredCommandIds.add(mobileSendCmdId);
@@ -901,10 +822,6 @@ joplin.plugins.register({
         await joplin.views.dialogs.addScript(htmlDialogHandle, './webview/linkHandler.js');
         await joplin.views.dialogs.setButtons(htmlDialogHandle, [{ id: 'ok', title: 'OK' }]);
         await joplin.views.dialogs.setFitToContent(htmlDialogHandle, false);
-
-        // Initialize Send Selection Dialog
-        sendDialogHandle = await joplin.views.dialogs.create('joplin2n8nSendDialog');
-        await joplin.views.dialogs.setFitToContent(sendDialogHandle, true);
 
         const versionInfo = await joplin.versionInfo();
         await registerSettings(versionInfo.platform, async () => {
