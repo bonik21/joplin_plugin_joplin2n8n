@@ -32,6 +32,13 @@ export async function registerSettings(platform: 'desktop' | 'mobile', onOpenMan
             public: false,
             label: 'Webhooks Configuration (JSON)',
         },
+        'lastUsedWebhookId': {
+            value: '',
+            type: SettingItemType.String,
+            section: 'joplin2n8n',
+            public: false,
+            label: 'Last Used Webhook ID',
+        },
         'openManagerAction': {
             value: false,
             type: SettingItemType.Bool,

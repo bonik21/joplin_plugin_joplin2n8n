@@ -210,6 +210,14 @@ async function getJoplinInfo(): Promise<JoplinInfo> {
 }
 
 async function executeWebhook(webhook: Webhook) {
+    if (webhook && webhook.id) {
+        try {
+            await joplin.settings.setValue('lastUsedWebhookId', webhook.id);
+        } catch (e) {
+            console.warn('Could not save lastUsedWebhookId', e);
+        }
+    }
+
     const note = await joplin.workspace.selectedNote();
     if (!note) {
         await joplin.views.dialogs.showMessageBox(_('errorNoNoteSelected'));
@@ -715,9 +723,17 @@ export async function updateDynamicMenu() {
                     await executeWebhook(currentHooks[0]);
                     return;
                 }
+                let lastUsedWebhookId = '';
+                try {
+                    lastUsedWebhookId = await joplin.settings.value('lastUsedWebhookId');
+                } catch (e) {
+                    // Ignore
+                }
+
                 let optionsHtml = '';
                 for (const hook of currentHooks) {
-                    optionsHtml += `<option value="${hook.id}">${hook.title || 'n8n'}</option>`;
+                    const isSelected = hook.id === lastUsedWebhookId ? ' selected' : '';
+                    optionsHtml += `<option value="${hook.id}"${isSelected}>${hook.title || 'n8n'}</option>`;
                 }
                 const html = `
                     <form name="sendForm">
