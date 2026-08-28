@@ -127,3 +127,46 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+
+function applyButtonWrapStyle() {
+    try {
+        const targets = [document];
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            targets.push(window.parent.document);
+        }
+        if (window.top && window.top.document && !targets.includes(window.top.document)) {
+            targets.push(window.top.document);
+        }
+
+        targets.forEach(doc => {
+            const buttonBars = doc.querySelectorAll('.modal-footer, .button-bar, div[class*="button-bar"], div[class*="buttonBar"], div[class*="modal-footer"], div[class*="buttons"]');
+            buttonBars.forEach(bar => {
+                bar.style.display = 'flex';
+                bar.style.flexWrap = 'wrap';
+                bar.style.gap = '6px';
+                bar.style.justifyContent = 'flex-end';
+
+                const buttons = bar.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.style.whiteSpace = 'normal';
+                    btn.style.height = 'auto';
+                    btn.style.minHeight = '30px';
+                    btn.style.lineHeight = '1.3';
+                    btn.style.padding = '6px 12px';
+                });
+            });
+        });
+    } catch (e) {
+        // Ignore cross-origin error if any
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyButtonWrapStyle);
+} else {
+    applyButtonWrapStyle();
+}
+setTimeout(applyButtonWrapStyle, 100);
+setTimeout(applyButtonWrapStyle, 300);
+setTimeout(applyButtonWrapStyle, 800);
+

@@ -376,6 +376,7 @@ async function executeWebhook(webhook: Webhook) {
 
             await joplin.views.dialogs.setButtons(htmlDialogHandle, [
                 { id: 'copyToClipboard', title: _('copyToClipboard') },
+                { id: 'insertCursor', title: _('insertAtCursor') },
                 { id: 'replaceNoteBody', title: _('replaceNoteBody') },
                 { id: 'ok', title: 'OK' },
             ]);
@@ -398,10 +399,16 @@ async function executeWebhook(webhook: Webhook) {
                         padding: 10px;
                         user-select: text;
                         overflow-y: auto;
-                        min-width: 700px;
+                        width: 100%;
+                        max-width: 100%;
                         max-height: 95vh;
                         box-sizing: border-box;
                         word-break: break-word;
+                    }
+                    @media (min-width: 768px) {
+                        #response-container {
+                            min-width: 600px;
+                        }
                     }
                 </style>
                 <input type="hidden" id="linkHandlerTranslations" value="${linkHandlerTranslations}">
@@ -411,6 +418,18 @@ async function executeWebhook(webhook: Webhook) {
 
             if (dlgResult.id === 'copyToClipboard') {
                 await joplin.clipboard.writeText(rawResponse);
+            } else if (dlgResult.id === 'insertCursor') {
+                const activeNote = await joplin.workspace.selectedNote();
+                if (activeNote && activeNote.id === note.id) {
+                    const versionInfo = await joplin.versionInfo();
+                    if (versionInfo.platform === 'desktop') {
+                        await joplin.commands.execute('replaceSelection', rawResponse);
+                    } else {
+                        await joplin.views.dialogs.showMessageBox(_('errorMobileReplaceUnsupported'));
+                    }
+                } else {
+                    await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
+                }
             } else if (dlgResult.id === 'replaceNoteBody') {
                 const activeNote = await joplin.workspace.selectedNote();
                 if (activeNote && activeNote.id === note.id) {
@@ -562,7 +581,10 @@ async function executeWebhook(webhook: Webhook) {
                         font-size: var(--joplin-note-viewer-font-size, 15px);
                         color: var(--joplin-color, #333);
                     }
-                    #response-container { padding: 15px; min-width: 600px; box-sizing: border-box; line-height: 1.5; }
+                    #response-container { padding: 15px; width: 100%; max-width: 100%; box-sizing: border-box; line-height: 1.5; }
+                    @media (min-width: 768px) {
+                        #response-container { min-width: 600px; }
+                    }
                     .header-box {
                         background: var(--joplin-background-color3, #f5f5f5);
                         border: 1px solid var(--joplin-divider-color, #e0e0e0);
@@ -735,15 +757,53 @@ export async function updateDynamicMenu() {
                     const isSelected = hook.id === lastUsedWebhookId ? ' selected' : '';
                     optionsHtml += `<option value="${hook.id}"${isSelected}>${hook.title || 'n8n'}</option>`;
                 }
+                const totalHooks = currentHooks.length;
+                const selectSize = Math.min(totalHooks, 8);
                 const html = `
+                    <style>
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            min-width: 400px;
+                        }
+                        .send-form-container {
+                            padding: 10px;
+                            box-sizing: border-box;
+                            min-width: 400px;
+                        }
+                        .webhook-select {
+                            width: 100%;
+                            font-size: 15px;
+                            box-sizing: border-box;
+                            border-radius: 4px;
+                            border: 1px solid var(--joplin-divider-color, #ccc);
+                            background: var(--joplin-background-color, #fff);
+                            color: var(--joplin-color, #333);
+                        }
+                        .webhook-select option {
+                            padding: 8px 10px;
+                        }
+                    </style>
                     <form name="sendForm">
-                        <div style="padding: 10px;">
-                            <h3 style="margin-top:0">${_('sendToN8n')}</h3>
-                            <select name="webhookId" style="width: 100%; padding: 10px; font-size: 16px;">
+                        <div class="send-form-container">
+                            <h3 style="margin-top:0; margin-bottom: 12px;">${_('sendToN8n')}</h3>
+                            <select name="webhookId" class="webhook-select" size="${selectSize}">
                                 ${optionsHtml}
                             </select>
                         </div>
                     </form>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var sel = document.querySelector('select[name="webhookId"]');
+                            if (sel) {
+                                var selectedOpt = sel.querySelector('option[selected]') || sel.querySelector('option:checked');
+                                if (selectedOpt) {
+                                    selectedOpt.scrollIntoView({ block: 'nearest' });
+                                }
+                                sel.focus();
+                            }
+                        });
+                    </script>
                 `;
                 await joplin.views.dialogs.setHtml(sendDialogHandle, html);
                 await joplin.views.dialogs.setButtons(sendDialogHandle, [
