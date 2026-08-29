@@ -52,15 +52,27 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
 
     const html = `
         <style>
-            body { min-width: ${dialogWidth}px; }
+            body { 
+                margin: 0;
+                padding: 0;
+                min-width: ${dialogWidth}px;
+                min-height: ${dialogHeight}px;
+            }
+            .dialog-wrapper {
+                display: flex;
+                flex-direction: column;
+                min-height: ${dialogHeight}px;
+            }
             #webhook-list { max-height: ${dialogHeight}px; }
         </style>
-        <form name="webhook-form" id="webhook-form">
-            <div id="app"></div>
-            <input type="hidden" name="webhooksJson" id="webhooksJson">
-            <input type="hidden" id="initialData" value="${escapeHtml(JSON.stringify(webhooks))}">
-            <input type="hidden" id="translationsData" value="${escapeHtml(JSON.stringify(translations))}">
-        </form>
+        <div class="dialog-wrapper">
+            <form name="webhook-form" id="webhook-form">
+                <div id="app"></div>
+                <input type="hidden" name="webhooksJson" id="webhooksJson">
+                <input type="hidden" id="initialData" value="${escapeHtml(JSON.stringify(webhooks))}">
+                <input type="hidden" id="translationsData" value="${escapeHtml(JSON.stringify(translations))}">
+            </form>
+        </div>
     `;
     
     await joplin.views.dialogs.setHtml(dialogHandle, html);

@@ -43,21 +43,52 @@ export async function openSendDialog(onSelect: (hook: Webhook) => Promise<void>)
 
     const html = `
         <style>
-            body { min-width: ${dialogWidth}px; }
-            .webhook-select { max-height: ${dialogHeight}px; }
+            body { 
+                margin: 0;
+                padding: 0;
+                min-width: ${dialogWidth}px;
+                min-height: ${dialogHeight}px;
+            }
+            .dialog-wrapper {
+                display: flex;
+                flex-direction: column;
+                min-height: ${dialogHeight}px;
+            }
+            form {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .send-dialog {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .form-group {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .webhook-select { 
+                flex: 1;
+                height: 100%;
+                max-height: ${dialogHeight}px; 
+            }
         </style>
-        <form name="sendForm" id="sendForm">
-            <div class="send-dialog">
-                <div class="header">
-                    <h3>${_('sendToN8n')}</h3>
+        <div class="dialog-wrapper">
+            <form name="sendForm" id="sendForm">
+                <div class="send-dialog">
+                    <div class="header">
+                        <h3>${_('sendToN8n')}</h3>
+                    </div>
+                    <div class="form-group">
+                        <select name="webhookId" id="webhookId" class="webhook-select" size="${selectSize}">
+                            ${optionsHtml}
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <select name="webhookId" id="webhookId" class="webhook-select" size="${selectSize}">
-                        ${optionsHtml}
-                    </select>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     `;
 
     await joplin.views.dialogs.setHtml(sendDialogHandle, html);
