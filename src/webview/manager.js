@@ -33,9 +33,32 @@ function render(scrollTop) {
         <div class="webhook-manager">
             <div class="header">
                 <h2>${t.title || 'Webhook Manager'}</h2>
-                <button type="button" class="btn" id="add-btn">+ ${t.addWebhook || 'Add New n8n Webhook'}</button>
+                <div class="header-actions">
+                    <button type="button" class="btn" id="add-btn">+ ${t.addWebhook || 'Add New n8n Webhook'}</button>
+                    <button type="button" class="btn" id="export-btn">💾 ${t.exportWebhooks || 'Save to File'}</button>
+                    <button type="button" class="btn" id="import-btn">📂 ${t.importWebhooks || 'Load from File'}</button>
+                    <input type="file" id="import-file-input" accept=".json,application/json" style="display: none;">
+                </div>
             </div>
             <div id="webhook-list"></div>
+        </div>
+
+        <div id="export-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>${t.exportModalTitle || 'Webhook JSON Backup & Restore'}</h3>
+                    <button type="button" class="btn" id="modal-close-x-btn" style="padding: 2px 8px; border: none; font-size: 16px;">✕</button>
+                </div>
+                <p class="modal-desc">${t.exportModalDesc || 'Copy JSON to backup, or edit/paste and click [Apply] to restore.'}</p>
+                <textarea id="export-json-textarea" class="modal-textarea" placeholder="JSON..."></textarea>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="modal-copy-btn">${t.copyJson || '📋 Copy'}</button>
+                    <button type="button" class="btn" id="modal-paste-btn">${t.pasteJson || '📋 Paste'}</button>
+                    <button type="button" class="btn" id="modal-share-btn" style="display: none;">${t.shareViaSystem || '📤 Share via System'}</button>
+                    <button type="button" class="btn" id="modal-apply-btn" style="font-weight: bold;">${t.applyJson || '📥 Apply'}</button>
+                    <button type="button" class="btn" id="modal-close-btn">${t.close || 'Close'}</button>
+                </div>
+            </div>
         </div>
     `;
 
@@ -138,6 +161,272 @@ function render(scrollTop) {
             const list = document.getElementById('webhook-list');
             if (list) list.scrollTop = list.scrollHeight;
             updateHiddenInput();
+        });
+    }
+
+    const exportBtn = document.getElementById('export-btn');
+    const exportModal = document.getElementById('export-modal');
+    const exportTextarea = document.getElementById('export-json-textarea');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalCloseXBtn = document.getElementById('modal-close-x-btn');
+    const modalCopyBtn = document.getElementById('modal-copy-btn');
+    const modalPasteBtn = document.getElementById('modal-paste-btn');
+    const modalShareBtn = document.getElementById('modal-share-btn');
+    const modalApplyBtn = document.getElementById('modal-apply-btn');
+
+    if (exportBtn && exportModal && exportTextarea) {
+        exportBtn.addEventListener('click', () => {
+            const dataStr = (webhooks && webhooks.length > 0) ? JSON.stringify(webhooks, null, 2) : '';
+            
+            // 1. Try file download (Works on PC)
+            if (dataStr) {
+                try {
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const now = new Date();
+                    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+                    a.href = url;
+                    a.download = `joplin2n8n_webhooks_${dateStr}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                } catch (err) {
+                    console.warn('Direct file download error', err);
+                }
+            }
+
+            // 2. Open Modal for Direct Editing / Clipboard / Paste / Apply / Share
+            exportTextarea.value = dataStr;
+            exportModal.style.display = 'flex';
+
+            if (modalShareBtn) {
+                if (navigator.share) {
+                    modalShareBtn.style.display = 'inline-block';
+                } else {
+                    modalShareBtn.style.display = 'none';
+                }
+            }
+        });
+
+        const closeModal = () => {
+            exportModal.style.display = 'none';
+            if (modalCopyBtn) {
+                modalCopyBtn.textContent = t.copyJson || '📋 Copy';
+            }
+            if (modalPasteBtn) {
+                modalPasteBtn.textContent = t.pasteJson || '📋 Paste';
+            }
+        };
+
+        if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+        if (modalCloseXBtn) modalCloseXBtn.addEventListener('click', closeModal);
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) closeModal();
+        });
+
+        if (modalCopyBtn) {
+            modalCopyBtn.addEventListener('click', () => {
+                const text = exportTextarea.value;
+                if (!text) return;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        modalCopyBtn.textContent = '✅ ' + (t.copied || 'Copied!');
+                        setTimeout(() => {
+                            modalCopyBtn.textContent = t.copyJson || '📋 Copy';
+                        }, 2500);
+                    }).catch(() => {
+                        fallbackCopy();
+                    });
+                } else {
+                    fallbackCopy();
+                }
+
+                function fallbackCopy() {
+                    exportTextarea.focus();
+                    exportTextarea.select();
+                    try {
+                        document.execCommand('copy');
+                        modalCopyBtn.textContent = '✅ ' + (t.copied || 'Copied!');
+                        setTimeout(() => {
+                            modalCopyBtn.textContent = t.copyJson || '📋 Copy';
+                        }, 2500);
+                    } catch (e) {
+                        alert(t.linkCopyFailed || 'Failed to copy');
+                    }
+                }
+            });
+        }
+
+        if (modalPasteBtn) {
+            modalPasteBtn.addEventListener('click', () => {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    navigator.clipboard.readText().then(clipText => {
+                        if (clipText) {
+                            exportTextarea.value = clipText;
+                            modalPasteBtn.textContent = '✅ ' + (t.copied || 'Pasted!');
+                            setTimeout(() => {
+                                modalPasteBtn.textContent = t.pasteJson || '📋 Paste';
+                            }, 2000);
+                        }
+                    }).catch(() => {
+                        exportTextarea.focus();
+                        exportTextarea.select();
+                    });
+                } else {
+                    exportTextarea.focus();
+                    exportTextarea.select();
+                }
+            });
+        }
+
+        if (modalApplyBtn) {
+            modalApplyBtn.addEventListener('click', () => {
+                const raw = exportTextarea.value.trim();
+                if (!raw) {
+                    alert(t.importErrorEmpty || 'JSON text is empty.');
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(raw);
+                    let importedList = [];
+                    if (Array.isArray(parsed)) {
+                        importedList = parsed;
+                    } else if (parsed && Array.isArray(parsed.webhooks)) {
+                        importedList = parsed.webhooks;
+                    } else if (parsed && typeof parsed === 'object' && parsed.url) {
+                        importedList = [parsed];
+                    } else {
+                        alert(t.importErrorInvalidJson || 'Invalid JSON format');
+                        return;
+                    }
+
+                    if (importedList.length === 0) {
+                        alert(t.importErrorEmpty || 'No webhook settings found in JSON');
+                        return;
+                    }
+
+                    const sanitized = importedList.map(item => ({
+                        id: item.id || generateId(),
+                        title: item.title || '',
+                        url: item.url || '',
+                        authType: item.authType || 'none',
+                        basicUser: item.basicUser || '',
+                        basicPass: item.basicPass || '',
+                        headerAuth: item.headerAuth || '',
+                        responseHandling: item.responseHandling || 'status',
+                        binaryHeaderKeys: item.binaryHeaderKeys || '',
+                        attachmentHandling: item.attachmentHandling || 'keep_id'
+                    }));
+
+                    if (webhooks.length > 0) {
+                        if (confirm(t.importConfirm || 'Overwrite existing webhook settings?\n[OK]: Overwrite\n[Cancel]: Append')) {
+                            webhooks = sanitized;
+                        } else {
+                            webhooks = webhooks.concat(sanitized);
+                        }
+                    } else {
+                        webhooks = sanitized;
+                    }
+
+                    render();
+                    updateHiddenInput();
+                    closeModal();
+                    alert(t.jsonAppliedSuccess || 'Webhook settings applied successfully.');
+                } catch (err) {
+                    console.error('Failed to apply JSON', err);
+                    alert((t.importErrorInvalidJson || 'Invalid JSON') + '\n' + (err.message || ''));
+                }
+            });
+        }
+
+        if (modalShareBtn) {
+            modalShareBtn.addEventListener('click', () => {
+                const text = exportTextarea.value;
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'joplin2n8n_webhooks.json',
+                        text: text
+                    }).catch((err) => {
+                        if (err.name !== 'AbortError') {
+                            console.log('Share dismissed or failed', err);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    const importBtn = document.getElementById('import-btn');
+    const importFileInput = document.getElementById('import-file-input');
+    if (importBtn && importFileInput) {
+        importBtn.addEventListener('click', () => {
+            importFileInput.value = '';
+            importFileInput.click();
+        });
+
+        importFileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    let importedList = [];
+                    if (Array.isArray(parsed)) {
+                        importedList = parsed;
+                    } else if (parsed && Array.isArray(parsed.webhooks)) {
+                        importedList = parsed.webhooks;
+                    } else if (parsed && typeof parsed === 'object' && parsed.url) {
+                        importedList = [parsed];
+                    } else {
+                        alert(t.importErrorInvalidJson || 'Invalid JSON format');
+                        return;
+                    }
+
+                    if (importedList.length === 0) {
+                        alert(t.importErrorEmpty || 'No webhook settings found in file');
+                        return;
+                    }
+
+                    const sanitized = importedList.map(item => ({
+                        id: item.id || generateId(),
+                        title: item.title || '',
+                        url: item.url || '',
+                        authType: item.authType || 'none',
+                        basicUser: item.basicUser || '',
+                        basicPass: item.basicPass || '',
+                        headerAuth: item.headerAuth || '',
+                        responseHandling: item.responseHandling || 'status',
+                        binaryHeaderKeys: item.binaryHeaderKeys || '',
+                        attachmentHandling: item.attachmentHandling || 'keep_id'
+                    }));
+
+                    if (webhooks.length > 0) {
+                        if (confirm(t.importConfirm || 'Overwrite existing webhook settings?\n[OK]: Overwrite\n[Cancel]: Append')) {
+                            webhooks = sanitized;
+                        } else {
+                            webhooks = webhooks.concat(sanitized);
+                        }
+                    } else {
+                        webhooks = sanitized;
+                    }
+
+                    render();
+                    updateHiddenInput();
+                    alert(t.importSuccess || 'Webhooks loaded successfully.');
+                } catch (err) {
+                    console.error('Failed to parse imported JSON', err);
+                    alert(t.importErrorInvalidJson || 'Invalid JSON file.');
+                } finally {
+                    importFileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
         });
     }
 

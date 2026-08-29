@@ -39,6 +39,22 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         moveDown: _('moveDown'),
         binaryHeaderKeysLabel: _('binaryHeaderKeysLabel'),
         binaryHeaderKeysPlaceholder: _('binaryHeaderKeysPlaceholder'),
+        exportWebhooks: _('exportWebhooks'),
+        importWebhooks: _('importWebhooks'),
+        exportSuccess: _('exportSuccess'),
+        importSuccess: _('importSuccess'),
+        importErrorInvalidJson: _('importErrorInvalidJson'),
+        importErrorEmpty: _('importErrorEmpty'),
+        importConfirm: _('importConfirm'),
+        exportModalTitle: _('exportModalTitle'),
+        exportModalDesc: _('exportModalDesc'),
+        copyJson: _('copyJson'),
+        pasteJson: _('pasteJson'),
+        applyJson: _('applyJson'),
+        shareViaSystem: _('shareViaSystem'),
+        close: _('close'),
+        copiedToClipboard: _('copiedToClipboard'),
+        jsonAppliedSuccess: _('jsonAppliedSuccess'),
     };
     
     function escapeHtml(unsafe: string) {
