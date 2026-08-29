@@ -97,5 +97,9 @@
   "shareViaSystem": "📤 시스템 공유",
   "close": "닫기",
   "copiedToClipboard": "웹훅 설정이 클립보드에 복사되었습니다.",
-  "jsonAppliedSuccess": "웹훅 설정이 성공적으로 적용되었습니다."
+  "jsonAppliedSuccess": "웹훅 설정이 성공적으로 적용되었습니다.",
+  "tooltipCopyToClipboard": "응답 텍스트를 클립보드에 복사합니다.",
+  "tooltipInsertCursor": "응답 텍스트를 커서위치에 삽입합니다. 영역이 선택되어 있을 경우 선택영역이 교체됩니다.",
+  "tooltipReplaceNoteBody": "노트 전체를 응답으로 교체합니다.",
+  "tooltipOk": "창을 닫습니다."
 }

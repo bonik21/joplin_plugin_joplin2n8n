@@ -158,6 +158,26 @@ function applyButtonWrapStyle() {
             ].join('\n');
             (parentDoc.head || parentDoc.documentElement).appendChild(style);
         }
+
+        // 버튼 툴팁(title 속성) 부여
+        const t = getTranslations();
+        const copyTitle = (t.btnCopyTitle || '').trim();
+        const insertTitle = (t.btnInsertTitle || '').trim();
+        const replaceTitle = (t.btnReplaceTitle || '').trim();
+
+        const buttons = parentDoc.querySelectorAll('.user-dialog-button-bar button');
+        buttons.forEach(button => {
+            const text = button.textContent.trim();
+            if ((copyTitle && text === copyTitle) || text.includes('복사') || text.includes('Copy')) {
+                button.setAttribute('title', t.tooltipCopyToClipboard || 'Copy response text to clipboard');
+            } else if ((insertTitle && text === insertTitle) || text.includes('삽입') || text.includes('Insert')) {
+                button.setAttribute('title', t.tooltipInsertCursor || 'Insert response text at cursor position');
+            } else if ((replaceTitle && text === replaceTitle) || text.includes('교체') || text.includes('Replace')) {
+                button.setAttribute('title', t.tooltipReplaceNoteBody || 'Replace the entire note with the response');
+            } else if (text === 'OK' || text === 'ok') {
+                button.setAttribute('title', t.tooltipOk || 'Close the window');
+            }
+        });
     } catch (e) {
         // parent document 접근 불가 시 무시
     }
@@ -191,3 +211,4 @@ setTimeout(applyButtonWrapStyle, 400);
         // Ignore
     }
 })();
+

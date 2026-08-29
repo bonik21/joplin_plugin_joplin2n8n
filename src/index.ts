@@ -383,6 +383,13 @@ async function executeWebhook(webhook: Webhook) {
             const linkHandlerTranslations = JSON.stringify({
                 linkCopied: _('linkCopied'),
                 linkCopyFailed: _('linkCopyFailed'),
+                btnCopyTitle: _('copyToClipboard'),
+                btnInsertTitle: _('insertAtCursor'),
+                btnReplaceTitle: _('replaceNoteBody'),
+                tooltipCopyToClipboard: _('tooltipCopyToClipboard'),
+                tooltipInsertCursor: _('tooltipInsertCursor'),
+                tooltipReplaceNoteBody: _('tooltipReplaceNoteBody'),
+                tooltipOk: _('tooltipOk'),
             }).replace(/"/g, '&quot;');
             await joplin.views.dialogs.setHtml(htmlDialogHandle, `
                 <style>

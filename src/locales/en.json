@@ -97,5 +97,9 @@
   "shareViaSystem": "📤 Share via System",
   "close": "Close",
   "copiedToClipboard": "Webhook settings copied to clipboard.",
-  "jsonAppliedSuccess": "Webhook settings applied successfully."
+  "jsonAppliedSuccess": "Webhook settings applied successfully.",
+  "tooltipCopyToClipboard": "Copy response text to clipboard.",
+  "tooltipInsertCursor": "Insert response text at cursor position. If text is selected, the selection will be replaced.",
+  "tooltipReplaceNoteBody": "Replace the entire note with the response.",
+  "tooltipOk": "Close the window."
 }
