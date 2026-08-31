@@ -26,7 +26,7 @@
   "noteSentSuccess": "%s(으)로 노트를 성공적으로 보냈습니다.",
   "noteSentError": "%s(으)로 노트를 보내는데 실패했습니다.",
   "errorNoNoteSelected": "현재 선택된 노트가 없습니다.",
-  "addNewWebhook": "➕ 새로 추가",
+  "addNewWebhook": "➕ 추가",
   "webhookTitle": "웹훅 제목",
   "webhookUrl": "웹훅 URL",
   "authType": "인증 방식",

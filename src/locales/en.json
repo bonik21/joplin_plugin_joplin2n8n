@@ -26,7 +26,7 @@
   "noteSentSuccess": "Note sent to %s successfully.",
   "noteSentError": "Failed to send note to %s.",
   "errorNoNoteSelected": "No note is currently selected.",
-  "addNewWebhook": "➕ Add New",
+  "addNewWebhook": "➕ Add",
   "webhookTitle": "Title",
   "webhookUrl": "URL",
   "authType": "Auth Type",
