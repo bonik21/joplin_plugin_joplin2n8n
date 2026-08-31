@@ -93,7 +93,7 @@
   "exportModalDesc": "Copy JSON to backup, or edit/paste JSON and click [Apply] to restore.",
   "copyJson": "📋 Copy",
   "pasteJson": "📋 Paste",
-  "applyJson": "📥 Apply (Import)",
+  "applyJson": "📥 Apply",
   "shareViaSystem": "📤 Share via System",
   "close": "Close",
   "copiedToClipboard": "Webhook settings copied to clipboard.",
