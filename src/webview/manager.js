@@ -543,7 +543,7 @@ function render(scrollTop) {
                     const titleDisplay = document.getElementById(`webhook-title-display-${idx}`);
                     if (titleDisplay) {
                         const val = e.target.value;
-                        titleDisplay.textContent = `Webhook ${idx + 1}${val ? ` (${val})` : ''}`;
+                        titleDisplay.textContent = `${idx + 1}${val ? `: ${val}` : ''}`;
                     }
                 }
                 updateHiddenInput();
