@@ -38,9 +38,9 @@ function render(scrollTop) {
             <div class="header">
                 <h2>${t.title || 'Webhook Manager'}</h2>
                 <div class="header-actions">
-                    <button type="button" class="btn" id="add-btn">+ ${t.addWebhook || 'Add New n8n Webhook'}</button>
-                    <button type="button" class="btn" id="export-btn">💾 ${t.exportWebhooks || 'Save to File'}</button>
-                    <button type="button" class="btn" id="import-btn">📂 ${t.importWebhooks || 'Load from File'}</button>
+                    <button type="button" class="btn" id="add-btn">${t.addWebhook || 'Add New n8n Webhook'}</button>
+                    <button type="button" class="btn" id="export-btn">${t.exportWebhooks || 'Save to File'}</button>
+                    <button type="button" class="btn" id="import-btn">${t.importWebhooks || 'Load from File'}</button>
                     <button type="button" class="btn" id="toggle-all-btn">${t.toggleAllCollapse || `${t.toggleAll || 'All'} ▼`}</button>
                     <input type="file" id="import-file-input" accept=".json,application/json" style="display: none;">
                 </div>
