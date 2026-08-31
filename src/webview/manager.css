@@ -19,11 +19,53 @@ body {
 }
 
 .webhook-item {
+    position: relative;
     border: 1px solid var(--joplin-divider-color);
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 4px;
     background: var(--joplin-background-color2);
+}
+
+.webhook-details {
+    width: 100%;
+}
+
+summary.webhook-summary {
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    padding: 4px 0;
+    padding-right: 170px;
+    min-height: 24px;
+    line-height: 24px;
+    box-sizing: border-box;
+}
+
+summary.webhook-summary::-webkit-details-marker {
+    color: var(--joplin-color);
+}
+
+.webhook-title {
+    font-size: 15px;
+    font-weight: bold;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.webhook-header-actions {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 2;
+}
+
+.webhook-body {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--joplin-divider-color);
 }
 
 .form-group {
@@ -36,7 +78,8 @@ body {
     font-weight: bold;
 }
 
-.form-group input, .form-group select {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 6px;
     border: 1px solid var(--joplin-divider-color);
@@ -47,7 +90,7 @@ body {
 }
 
 .btn {
-    padding: 6px 12px;
+    padding: 6px 8px;
     border: 1px solid var(--joplin-divider-color);
     border-radius: 4px;
     background: var(--joplin-background-color);
@@ -104,7 +147,7 @@ body {
     max-width: 520px;
     box-sizing: border-box;
     padding: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     gap: 12px;

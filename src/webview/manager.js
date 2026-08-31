@@ -10,22 +10,26 @@ function generateId() {
 function render(scrollTop) {
     const app = document.getElementById('app');
     if (!app) return;
-    
+
     // Save scroll position before re-render
     const prevList = document.getElementById('webhook-list');
     const savedScroll = scrollTop !== undefined ? scrollTop : (prevList ? prevList.scrollTop : 0);
-    
+
+    // Save open/closed state of existing details elements
+    const existingDetails = document.querySelectorAll('details.webhook-details');
+    const openStates = existingDetails.length > 0 ? Array.from(existingDetails).map(d => d.open) : null;
+
     // Load data on first render if empty
     if (webhooks.length === 0) {
         const initialDataEl = document.getElementById('initialData');
         if (initialDataEl && initialDataEl.value) {
-            try { webhooks = JSON.parse(initialDataEl.value); } catch(e) { console.error(e); }
+            try { webhooks = JSON.parse(initialDataEl.value); } catch (e) { console.error(e); }
         }
     }
     if (Object.keys(t).length === 0) {
         const transDataEl = document.getElementById('translationsData');
         if (transDataEl && transDataEl.value) {
-            try { t = JSON.parse(transDataEl.value); } catch(e) { console.error(e); }
+            try { t = JSON.parse(transDataEl.value); } catch (e) { console.error(e); }
         }
     }
 
@@ -37,6 +41,7 @@ function render(scrollTop) {
                     <button type="button" class="btn" id="add-btn">+ ${t.addWebhook || 'Add New n8n Webhook'}</button>
                     <button type="button" class="btn" id="export-btn">💾 ${t.exportWebhooks || 'Save to File'}</button>
                     <button type="button" class="btn" id="import-btn">📂 ${t.importWebhooks || 'Load from File'}</button>
+                    <button type="button" class="btn" id="toggle-all-btn">${t.toggleAllCollapse || `${t.toggleAll || 'All'} ▼`}</button>
                     <input type="file" id="import-file-input" accept=".json,application/json" style="display: none;">
                 </div>
             </div>
@@ -66,7 +71,8 @@ function render(scrollTop) {
     webhooks.forEach((hook, index) => {
         const item = document.createElement('div');
         item.className = 'webhook-item';
-        
+        const isOpen = openStates ? (openStates[index] !== undefined ? openStates[index] : true) : true;
+
         let authFields = '';
         if (hook.authType === 'basic') {
             authFields = `
@@ -89,56 +95,81 @@ function render(scrollTop) {
         }
 
         item.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="margin: 0;">Webhook ${index + 1}</h4>
-                <div style="display: flex; gap: 5px;">
-                    ${index > 0 ? `<button type="button" class="btn move-up-btn" data-index="${index}">↑ ${t.moveUp || 'Move Up'}</button>` : ''}
-                    ${index < webhooks.length - 1 ? `<button type="button" class="btn move-down-btn" data-index="${index}">↓ ${t.moveDown || 'Move Down'}</button>` : ''}
-                    <button type="button" class="btn btn-danger delete-btn" data-index="${index}">${t.delete || 'Delete'}</button>
+            <div class="webhook-header-actions">
+                ${index > 0 ? `<button type="button" class="btn move-up-btn" data-index="${index}">↑ ${t.moveUp || 'Move Up'}</button>` : ''}
+                ${index < webhooks.length - 1 ? `<button type="button" class="btn move-down-btn" data-index="${index}">↓ ${t.moveDown || 'Move Down'}</button>` : ''}
+                <button type="button" class="btn btn-danger delete-btn" data-index="${index}">${t.delete || 'Delete'}</button>
+            </div>
+            <details class="webhook-details" ${isOpen ? 'open' : ''} data-index="${index}">
+                <summary class="webhook-summary">
+                    <span id="webhook-title-display-${index}" class="webhook-title">${index + 1}${hook.title ? `: ${escapeHtml(hook.title)}` : ''}</span>
+                </summary>
+                <div class="webhook-body">
+                    <div class="form-group">
+                        <label>${t.webhookTitle || 'Webhook Title'}</label>
+                        <input type="text" data-index="${index}" data-field="title" value="${escapeHtml(hook.title || '')}" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>${t.webhookUrl || 'Webhook URL'}</label>
+                        <input type="text" data-index="${index}" data-field="url" value="${escapeHtml(hook.url || '')}" placeholder="http://...">
+                    </div>
+                    <div class="form-group">
+                        <label>${t.authType || 'Auth Type'}</label>
+                        <select data-index="${index}" data-field="authType">
+                            <option value="none" ${hook.authType === 'none' ? 'selected' : ''}>${t.authNone || 'None'}</option>
+                            <option value="basic" ${hook.authType === 'basic' ? 'selected' : ''}>${t.authBasic || 'Basic Auth'}</option>
+                            <option value="header" ${hook.authType === 'header' ? 'selected' : ''}>${t.authHeader || 'Header Auth'}</option>
+                        </select>
+                    </div>
+                    ${authFields}
+                    <div class="form-group">
+                        <label>${t.responseHandling || 'Response Handling'}</label>
+                        <select data-index="${index}" data-field="responseHandling">
+                            <option value="status" ${hook.responseHandling === 'status' ? 'selected' : ''}>${t.responseStatus || 'Status only'}</option>
+                            <option value="text" ${hook.responseHandling === 'text' ? 'selected' : ''}>${t.responseText || 'Show Response TEXT'}</option>
+                            <option value="html" ${hook.responseHandling === 'html' ? 'selected' : ''}>${t.responseHtml || 'Show Response HTML'}</option>
+                            <option value="file" ${hook.responseHandling === 'file' ? 'selected' : ''}>${t.responseFile || 'Insert File into Note'}</option>
+                        </select>
+                    </div>
+                    ${hook.responseHandling === 'file' ? `
+                    <div class="form-group" style="margin-left: 20px; margin-top: -10px;">
+                        <label>${t.binaryHeaderKeysLabel || 'Display the following header contents'}</label>
+                        <input type="text" data-index="${index}" data-field="binaryHeaderKeys" value="${escapeHtml(hook.binaryHeaderKeys || '')}" placeholder="${t.binaryHeaderKeysPlaceholder || 'e.g., j2n-bin_desc, j2n-bin_by...'}">
+                    </div>
+                    ` : ''}
+                    <div class="form-group">
+                        <label>${t.attachmentHandling || 'Markdown Attachment Links'}</label>
+                        <select data-index="${index}" data-field="attachmentHandling">
+                            <option value="keep_id" ${hook.attachmentHandling === 'keep_id' || !hook.attachmentHandling ? 'selected' : ''}>${t.attachmentKeepId || 'Keep Link (:/joplin_resource_id)'}</option>
+                            <option value="replace_name" ${hook.attachmentHandling === 'replace_name' ? 'selected' : ''}>${t.attachmentReplaceName || 'Replace with Filename'}</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label>${t.webhookTitle || 'Webhook Title'}</label>
-                <input type="text" data-index="${index}" data-field="title" value="${escapeHtml(hook.title || '')}" placeholder="Optional">
-            </div>
-            <div class="form-group">
-                <label>${t.webhookUrl || 'Webhook URL'}</label>
-                <input type="text" data-index="${index}" data-field="url" value="${escapeHtml(hook.url || '')}" placeholder="http://...">
-            </div>
-            <div class="form-group">
-                <label>${t.authType || 'Auth Type'}</label>
-                <select data-index="${index}" data-field="authType">
-                    <option value="none" ${hook.authType === 'none' ? 'selected' : ''}>${t.authNone || 'None'}</option>
-                    <option value="basic" ${hook.authType === 'basic' ? 'selected' : ''}>${t.authBasic || 'Basic Auth'}</option>
-                    <option value="header" ${hook.authType === 'header' ? 'selected' : ''}>${t.authHeader || 'Header Auth'}</option>
-                </select>
-            </div>
-            ${authFields}
-            <div class="form-group">
-                <label>${t.responseHandling || 'Response Handling'}</label>
-                <select data-index="${index}" data-field="responseHandling">
-                    <option value="status" ${hook.responseHandling === 'status' ? 'selected' : ''}>${t.responseStatus || 'Status only'}</option>
-                    <option value="text" ${hook.responseHandling === 'text' ? 'selected' : ''}>${t.responseText || 'Show Response TEXT'}</option>
-                    <option value="html" ${hook.responseHandling === 'html' ? 'selected' : ''}>${t.responseHtml || 'Show Response HTML'}</option>
-                    <option value="file" ${hook.responseHandling === 'file' ? 'selected' : ''}>${t.responseFile || 'Insert File into Note'}</option>
-                </select>
-            </div>
-            ${hook.responseHandling === 'file' ? `
-            <div class="form-group" style="margin-left: 20px; margin-top: -10px;">
-                <label>${t.binaryHeaderKeysLabel || 'Display the following header contents'}</label>
-                <input type="text" data-index="${index}" data-field="binaryHeaderKeys" value="${escapeHtml(hook.binaryHeaderKeys || '')}" placeholder="${t.binaryHeaderKeysPlaceholder || 'e.g., j2n-bin_desc, j2n-bin_by...'}">
-            </div>
-            ` : ''}
-            <div class="form-group">
-                <label>${t.attachmentHandling || 'Markdown Attachment Links'}</label>
-                <select data-index="${index}" data-field="attachmentHandling">
-                    <option value="keep_id" ${hook.attachmentHandling === 'keep_id' || !hook.attachmentHandling ? 'selected' : ''}>${t.attachmentKeepId || 'Keep Link (:/joplin_resource_id)'}</option>
-                    <option value="replace_name" ${hook.attachmentHandling === 'replace_name' ? 'selected' : ''}>${t.attachmentReplaceName || 'Replace with Filename'}</option>
-                </select>
-            </div>
+            </details>
         `;
         list.appendChild(item);
     });
+
+    // Update toggle all button state
+    function updateToggleAllBtn() {
+        const toggleBtn = document.getElementById('toggle-all-btn');
+        if (!toggleBtn) return;
+        const allDetails = document.querySelectorAll('details.webhook-details');
+        if (allDetails.length === 0) {
+            toggleBtn.style.display = 'none';
+            return;
+        } else {
+            toggleBtn.style.display = '';
+        }
+        const hasOpen = Array.from(allDetails).some(d => d.open);
+        if (hasOpen) {
+            toggleBtn.textContent = t.toggleAllCollapse || `${t.toggleAll || 'All'} ▼`;
+        } else {
+            toggleBtn.textContent = t.toggleAllExpand || `${t.toggleAll || 'All'} ▶`;
+        }
+    }
+
+    updateToggleAllBtn();
 
     // Restore scroll position
     const newList = document.getElementById('webhook-list');
@@ -177,7 +208,7 @@ function render(scrollTop) {
     if (exportBtn && exportModal && exportTextarea) {
         exportBtn.addEventListener('click', () => {
             const dataStr = (webhooks && webhooks.length > 0) ? JSON.stringify(webhooks, null, 2) : '';
-            
+
             // 1. Try file download (Works on PC)
             if (dataStr) {
                 try {
@@ -430,8 +461,28 @@ function render(scrollTop) {
         });
     }
 
+    const toggleAllBtn = document.getElementById('toggle-all-btn');
+    if (toggleAllBtn) {
+        toggleAllBtn.addEventListener('click', () => {
+            const allDetails = document.querySelectorAll('details.webhook-details');
+            const hasOpen = Array.from(allDetails).some(d => d.open);
+            const targetState = !hasOpen;
+            allDetails.forEach(d => {
+                d.open = targetState;
+            });
+            updateToggleAllBtn();
+        });
+    }
+
+    document.querySelectorAll('details.webhook-details').forEach(d => {
+        d.addEventListener('toggle', () => {
+            updateToggleAllBtn();
+        });
+    });
+
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const index = e.target.getAttribute('data-index');
             if (index !== null) {
                 webhooks.splice(parseInt(index, 10), 1);
@@ -443,6 +494,7 @@ function render(scrollTop) {
 
     document.querySelectorAll('.move-up-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const index = parseInt(e.target.getAttribute('data-index'), 10);
             if (index > 0) {
                 const temp = webhooks[index];
@@ -456,6 +508,7 @@ function render(scrollTop) {
 
     document.querySelectorAll('.move-down-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const index = parseInt(e.target.getAttribute('data-index'), 10);
             if (index < webhooks.length - 1) {
                 const temp = webhooks[index];
@@ -486,6 +539,13 @@ function render(scrollTop) {
             if (index !== null && field && field !== 'authType' && field !== 'responseHandling' && field !== 'attachmentHandling') {
                 const idx = parseInt(index, 10);
                 webhooks[idx][field] = e.target.value;
+                if (field === 'title') {
+                    const titleDisplay = document.getElementById(`webhook-title-display-${idx}`);
+                    if (titleDisplay) {
+                        const val = e.target.value;
+                        titleDisplay.textContent = `Webhook ${idx + 1}${val ? ` (${val})` : ''}`;
+                    }
+                }
                 updateHiddenInput();
             }
         });

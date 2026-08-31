@@ -55,6 +55,9 @@ export async function openWebhookManager(onSave?: () => Promise<void>) {
         close: _('close'),
         copiedToClipboard: _('copiedToClipboard'),
         jsonAppliedSuccess: _('jsonAppliedSuccess'),
+        toggleAll: _('toggleAll'),
+        toggleAllCollapse: _('toggleAllCollapse'),
+        toggleAllExpand: _('toggleAllExpand'),
     };
     
     function escapeHtml(unsafe: string) {

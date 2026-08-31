@@ -26,7 +26,7 @@
   "noteSentSuccess": "Note sent to %s successfully.",
   "noteSentError": "Failed to send note to %s.",
   "errorNoNoteSelected": "No note is currently selected.",
-  "addNewWebhook": "Add New n8n Webhook",
+  "addNewWebhook": "Add New Webhook",
   "webhookTitle": "Title",
   "webhookUrl": "URL",
   "authType": "Auth Type",
@@ -101,5 +101,8 @@
   "tooltipCopyToClipboard": "Copy response text to clipboard.",
   "tooltipInsertCursor": "Insert response text at cursor position. If text is selected, the selection will be replaced.",
   "tooltipReplaceNoteBody": "Replace the entire note with the response.",
-  "tooltipOk": "Close the window."
+  "tooltipOk": "Close the window.",
+  "toggleAll": "All",
+  "toggleAllCollapse": "All ▼",
+  "toggleAllExpand": "All ▶"
 }
