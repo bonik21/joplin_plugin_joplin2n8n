@@ -71,7 +71,7 @@ function render(scrollTop) {
     webhooks.forEach((hook, index) => {
         const item = document.createElement('div');
         item.className = 'webhook-item';
-        const isOpen = openStates ? (openStates[index] !== undefined ? openStates[index] : true) : true;
+        const isOpen = openStates ? (openStates[index] !== undefined ? openStates[index] : false) : false;
 
         let authFields = '';
         if (hook.authType === 'basic') {
