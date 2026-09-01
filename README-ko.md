@@ -1,13 +1,15 @@
+[English](README.md) | [한국어](README-ko.md)
+
 # Joplin to n8n (joplin2n8n)
 
-Joplin의 노트 내용을 외부 자동화 툴인 N8N(또는 커스텀 서버) 웹훅으로 전송하고, 그 응답을 받아와 노트를 수정하거나 결과를 표시해주는 Joplin 플러그인입니다.
+Joplin의 노트 내용을 자동화 플랫폼인 n8n(또는 커스텀 서버)의 웹훅으로 전송하고, 그 응답을 받아와 노트를 수정하거나 결과를 표시해주는 Joplin 플러그인입니다.
 
-⚠️N8N[^1](혹은 커스텀 서버) 내에서의 워크플로우는 사용자가 직접 구성해야 합니다.
+⚠️ n8n[^1](혹은 커스텀 서버) 내에서의 워크플로우는 사용자가 직접 구성해야 합니다.
 
 [^1]: `N8N`은 노드 기반의 워크플로우 자동화 플랫폼으로, 시각적인 드래그 앤 드롭 인터페이스를 사용하여 다양한 앱, 서비스 및 AI 모델을 연결하고 작업을 자동화할 수 있는 도구입니다.
 
 ## joplin2n8n 작동 흐름
-현재 조플린 모바일 플러그인에서는 로컬 저장소 접근 제한으로 파일을 노트에 바로 삽입할 수 없습니다.
+> ℹ️ 현재 Joplin 모바일 플러그인에서는 로컬 저장소 접근 제한으로 파일을 노트에 바로 삽입할 수 없습니다.
 	
 ```mermaid
 graph TD
@@ -46,7 +48,7 @@ graph TD
 - **모바일** (Android)
 - *macOS 및 iOS는 테스트 환경이 없어 작동을 100% 보장하지 못합니다.*
 
-## 스크린샷
+## 📸 스크린샷
 ![joplin2n8n-overview-step1-2](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-overview-step1-2.png)
 
 ![joplin2n8n-overview-step3-4](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-overview-step3-4.png)
@@ -76,20 +78,20 @@ graph TD
 ---
 
 ## ⚙️ 웹훅 등록 및 설정
-플러그인 설치 후 `도구(Tools)` -> `joplin2n8n 설정 변경` 메뉴를 클릭하여 N8N 웹훅을 등록합니다.
+플러그인 설치 후 `도구(Tools)` -> `joplin2n8n 설정 변경` 메뉴를 클릭하여 n8n 웹훅을 등록합니다.
 - **웹훅 제목**: 웹훅 제목을 입력합니다.
-- **웹훅 URL**: 조플린이 요청을 보낼 N8N 웹훅 주소를 입력합니다.
+- **웹훅 URL**: Joplin이 요청을 보낼 n8n 웹훅 주소를 입력합니다.
 - **인증 방식**: `없음`, `Basic Auth`, `Header Auth` 중 서버 구성에 맞게 선택합니다.
 ![joplin2n8n-settings-auth_type](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-settings-auth_type.png)
 - **응답 처리**: 
   - `성공 여부만 표시`: 팝업으로 전송 성공/실패 여부만 띄웁니다.
   - `응답 TEXT/MD를 표시`: 응답받은 텍스트/마크다운을 보여주며, 필요시 기존 노트를 이 내용으로 교체할 수 있습니다.
   - `응답 HTML을 표시`: 응답받은 HTML을 팝업 화면에 렌더링해서 보여줍니다.
-  - `파일을 노트에 삽입`: 응답으로 받은 파일을 노트에 삽입합니다. 모바일에서는 코어의 제약으로인해 지원하지 않으므로 외부에 업로드 후 링크를 받는 방식으로 우회해야 합니다.
+  - `파일을 노트에 삽입`: 응답으로 받은 파일을 노트에 삽입합니다. 모바일에서는 코어의 제약으로 인해 지원하지 않으므로 외부 서버에 업로드한 뒤 링크를 응답으로 받는 방식으로 우회해야 합니다.
 ![joplin2n8n-settings-response_handling](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-settings-response_handling.png)
 - **마크다운 첨부파일 처리**: 
-  - `링크 유지`: 조플린 노트의 마크다운 링크 구조를 유지 합니다. `![text](:joplin_resource_id)`
-  - `파일명을 치환`: 조플린 노트의 마크다운 링크를 실제 파일명으로 치환합니다. `![text](filename.ext)`
+  - `링크 유지`: Joplin 노트의 마크다운 링크 구조를 유지합니다. `![text](:joplin_resource_id)`
+  - `파일명을 치환`: Joplin 노트의 마크다운 링크를 실제 파일명으로 치환합니다. `![text](filename.ext)`
 ![markdown_attachment_links](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-settings-markdown_attachment_links.png)
 ---
 
@@ -97,8 +99,7 @@ graph TD
 Joplin의 기본 설정 창 (`도구` -> `설정` -> `joplin2n8n`)에서 세부 옵션을 조절할 수 있습니다.
 
 ![Joplin Plugin Options](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/screenshots/joplin2n8n-option.png)
-- joplin2n8n의 플러그인 옵션입니다. 
-  웹훅 설정 다이얼로그 열기, UI 설정, 동작 설정, Payload에 담길 조플린 환경(기기명, 프로필명) 설정이 가능합니다.
+*웹훅 설정 다이얼로그 열기, UI 설정, 동작 설정, Payload에 포함될 Joplin 환경(기기명, 프로필명) 설정이 가능합니다.*
 
 ---
 
@@ -119,10 +120,10 @@ Joplin의 기본 설정 창 (`도구` -> `설정` -> `joplin2n8n`)에서 세부 
 
 ---
 
-## 🔧 N8N 워크플로우 설정
+## 🔧 n8n 워크플로우 설정
 
-N8N 워크플로우는 사용자의 상황과 목적에 맞게 직접 구성하셔야 합니다.
-*(반드시 N8N을 사용할 필요는 없으며, Python FastAPI나 Node.js Fastify 등을 이용해 커스텀 서버를 직접 구축하여 사용해도 완벽하게 호환됩니다.)*
+n8n 워크플로우는 사용자의 상황과 목적에 맞게 직접 구성하셔야 합니다.
+*(반드시 n8n을 사용할 필요는 없으며, Python FastAPI나 Node.js Fastify 등을 이용해 커스텀 서버를 직접 구축하여 사용해도 문제없이 동작합니다.)*
 
 **기본 워크플로우 구조:**
 `Webhook 노드` ➔ `필요한 처리 노드(AI, API 등)` ➔ `Respond to Webhook 노드`
@@ -146,7 +147,7 @@ N8N 워크플로우는 사용자의 상황과 목적에 맞게 직접 구성하�
   - 텍스트 기반 그래픽 이미지 생성 또는 음악 생성
 - 📊 **RAG (검색 증강 생성)**: 노트 데이터를 임베딩(Embedding)하여 벡터 DB에 저장
 
-## 예시를 보여주는 animated GIF
+## 🎬 동작 예시
 ![AI-generate](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-AI-generate.gif)
 *AI를 이용한 텍스트 생성 예시*
   
@@ -157,20 +158,20 @@ N8N 워크플로우는 사용자의 상황과 목적에 맞게 직접 구성하�
 *Javascript 코드를 이용해 마크다운 테이블을 Json으로 변환하는 예시*
 
 ![Image-get_exif](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-Image-get_exif.gif)
-*Exiftool을 이용해  이미지 파일의 정보를 알아내는 예시*
+*Exiftool을 이용해 이미지 파일의 메타데이터를 추출하는 예시*
 
 ![Image-image2table](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-Image-image2table.gif)
-*AI를 이용해  이미지 내의 표를 마크다운 표로 변환하는 예시*
+*AI를 이용해 이미지에 포함된 표를 마크다운 표로 변환하는 예시*
 
 ![Image-md2html](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-Image-md2html.gif)
 *Javascript 코드를 이용해 마크다운 형식의 이미지 코드를 HTML 형식의 이미지 코드로 변환하는 예시(손쉽게 너비 조절 및 가운데 정렬 가능)*
 
-![Image-md2html](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-Image-md2html.gif)
-*joplin2n8n을 활용한 마크다운 이미지 변환 예시*
+![Image-resize_and_convert](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/example-gif/joplin2n8n-Image-resize_and_convert.gif)
+*ImageMagick을 이용해 이미지의 크기와 형식(확장자)를 변환하는 예시*
 
 ---
 
-## 팁 (Tips)
+## 💡 팁
 ### 응답(Response) 옵션 선택 가이드
 - **성공 여부만 표시**: 백그라운드로 처리되는 작업(메일 전송, 백업 등)의 성공/실패 여부만 확인할 때 유용합니다.
 - **응답 TEXT/MD를 표시**: AI 교정이나 번역 등, **마크다운 노트 본문을 변경(교체)**하는 작업에 사용하세요.
@@ -178,14 +179,14 @@ N8N 워크플로우는 사용자의 상황과 목적에 맞게 직접 구성하�
 - **파일을 노트에 삽입**:  응답으로 받은 파일을 노트에 바로 삽입하거나 보낸 파일을 새 파일로 교체할 때 사용합니다. 파일 변환, Text to Image 등에 사용할 수 있습니다.
 
 ### 모바일에서 바이너리 받기
-모바일에서 조플린 플러그인은 로컬 저장소 접근 권한이 없기 때문에 다음과 같은 방식으로 우회할 수 있습니다.
-- N8N에서 바이너리 작성
-- 외부 업로드 후 링크를 응답으로 표시
-- 조플린에서 응답 내의 URL을 클릭(복사가 실행됩니다.)
-- 모바일 브라우저에서 링크를 붙여넣고 다운로드
-- 노트에 삽입
+모바일에서 Joplin 플러그인은 로컬 저장소 접근 권한이 없기 때문에 다음과 같은 방식으로 우회할 수 있습니다.
+1. n8n에서 파일(바이너리) 생성 후 외부 서버에 업로드
+2. 업로드된 파일의 링크를 응답으로 반환
+3. Joplin에서 응답 내의 URL을 클릭 (자동으로 클립보드에 복사됩니다.)
+4. 모바일 브라우저에서 링크를 붙여넣고 다운로드
+5. 다운로드한 파일을 노트에 삽입
 
-### N8N 쿼리(Query)를 이용해 단일 웹훅으로 다중 라우팅하기
+### n8n 쿼리(Query)를 이용해 단일 웹훅으로 다중 라우팅하기
 웹훅 개수를 무한정 늘리는 대신, URL 파라미터를 활용하고 n8n 내부에서 **Switch 노드**로 분기하면 URL 1개로 다양한 자동화를 처리할 수 있습니다.
 
 ```text
