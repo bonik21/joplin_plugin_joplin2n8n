@@ -8,10 +8,70 @@
 	"author": "BoniK",
 	"homepage_url": "https://github.com/bonik21/joplin_plugin_joplin2n8n",
 	"repository_url": "https://github.com/bonik21/joplin_plugin_joplin2n8n",
-	"keywords": [],
-	"categories": [],
-	"screenshots": [],
-	"icons": {},
+	"keywords": [
+		"n8n",
+		"webhook",
+		"automation",
+		"ai",
+		"send",
+		"export",
+		"workflow",
+		"integration",
+		"convert",
+		"translate"
+	],
+	"categories": [
+		"productivity",
+		"integrations"
+	],
+	"screenshots": [
+		{
+			"src": "images/screenshots/joplin2n8n-overview-step1-2.png",
+			"label": "Screenshot: Execution flow - Send note or selection to webhook"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-overview-step3-4.png",
+			"label": "Screenshot: Execution flow - Receive response and update note"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-dialong_settings.png",
+			"label": "Screenshot: Webhook Settings Dialog"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-dialog_send.png",
+			"label": "Screenshot: Webhook Send Dialog"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-settings-auth_type.png",
+			"label": "Screenshot: Authentication Type Settings"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-settings-response_handling.png",
+			"label": "Screenshot: Response Handling Options"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-settings-markdown_attachment_links.png",
+			"label": "Screenshot: Markdown Attachment Links Settings"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-option.png",
+			"label": "Screenshot: Joplin Plugin Options"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-n8n_example_workflow.png",
+			"label": "Screenshot: n8n Example Workflow"
+		},
+		{
+			"src": "images/screenshots/joplin2n8n-n8n_bin_response.png",
+			"label": "Screenshot: n8n Binary File Response Setup"
+		}
+	],
+	"icons": {
+		"32": "images/icons/icon_32.png",
+		"64": "images/icons/icon_64.png",
+		"128": "images/icons/icon_128.png",
+		"256": "images/icons/icon_256.png"
+	},
 	"promo_tile": {},
 	"platforms": ["desktop", "mobile"]
 }
