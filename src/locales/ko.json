@@ -20,7 +20,7 @@
   "showInToolsMenuDesc": "체크 해제 시 상단 메뉴의 [도구]에서 전송 항목이 숨겨집니다. (설정 창 열기 항목은 항상 표시됩니다.) 변경 후 Joplin 재시작 시 적용됩니다.",
   "copyNoteBeforeSendLabel": "[동작 옵션] 전송 전 본문 클립보드 복사",
   "copyNoteBeforeSendDesc": "웹훅으로 데이터를 전송하기 전에 원본 노트 본문을 클립보드에 자동으로 복사합니다.",
-  "sendToN8n": "n8n으로 보내기",
+  "sendToN8n": "joplin2n8n",
   "sendToWebhook": "%s(으)로 보내기",
   "noWebhooksConfigured": "설정된 웹훅이 없습니다. [도구] -> [joplin2n8n 설정]에서 웹훅을 추가해주세요.",
   "noteSentSuccess": "%s(으)로 노트를 성공적으로 보냈습니다.",

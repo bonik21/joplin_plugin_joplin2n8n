@@ -20,7 +20,7 @@
   "showInToolsMenuDesc": "When unchecked, send actions are hidden from the Tools menu. (The settings dialog entry is always shown.) Takes effect after restarting Joplin.",
   "copyNoteBeforeSendLabel": "[Action] Copy note to clipboard before sending",
   "copyNoteBeforeSendDesc": "Automatically copy the original note content to the clipboard before sending it to the webhook.",
-  "sendToN8n": "Send to n8n",
+  "sendToN8n": "joplin2n8n",
   "sendToWebhook": "Send to %s",
   "noWebhooksConfigured": "No webhooks configured. Please add one in [Tools] -> [joplin2n8n Settings].",
   "noteSentSuccess": "Note sent to %s successfully.",
