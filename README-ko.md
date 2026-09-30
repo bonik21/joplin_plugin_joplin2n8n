@@ -11,37 +11,8 @@ Joplin의 노트 내용을 자동화 플랫폼인 n8n(또는 커스텀 서버)�
 ## joplin2n8n 작동 흐름
 > ℹ️ 현재 Joplin 모바일 플러그인에서는 로컬 저장소 접근 제한으로 파일을 노트에 바로 삽입할 수 없습니다.
 	
-```mermaid
-graph TD
-    J["Joplin"]
-    PC["PC Plugin"]
-    M["Mobile Plugin"]
-    N8N["N8N"]
+![joplin2n8n-mermaid](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/joplin2n8n-mermaid.png)
 
-    J <-->|"Text & Binary"| PC
-	J ~~~ PC
-    J -->|"Text & Binary"| M
-    M -.->|"Text Only<br>(❌Binary)"| J
-
-    PC <-->|"Text & Binary"| N8N
-    M <-->|"Text & Binary"| N8N
-
-    classDef joplin fill:#1681e4,stroke:#0d5bb0,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef pc fill:#8d5bc3,stroke:#4338ca,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef mobile fill:#c74fbc,stroke:#92400e,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef n8n fill:#e3496d,stroke:#a8283f,stroke-width:2px,color:#ffffff,rx:8,ry:8
-
-    class J joplin
-    class PC pc
-    class M mobile
-    class N8N n8n
-
-    linkStyle 0 stroke:#6366f1,stroke-width:6px 5
-    linkStyle 2 stroke:#d97706,stroke-width:6px 5
-    linkStyle 3 stroke:#d32f2f,stroke-width:5px 5,stroke-dasharray:8 5
-    linkStyle 4 stroke:#6366f1,stroke-width:6px 5
-    linkStyle 5 stroke:#d97706,stroke-width:6px 5
-```
 
 ## 📱 지원 환경
 - **PC** (Windows, Linux)
@@ -66,7 +37,7 @@ graph TD
 
 ### 공식 설치 (플러그인 스토어)
 1. Joplin 메뉴에서 `도구(Tools)` -> `설정(Options)` -> `플러그인(Plugins)`으로 이동합니다.
-2. 검색창에 `joplin2n8n`을 검색합니다.
+2. 검색창에 `joplin to n8n` 또는 `joplin2n8n`을 검색합니다.
 3. 설치 버튼을 누르고 Joplin을 재시작합니다.
 
 ### 수동 설치 (파일로 설치)
@@ -202,3 +173,4 @@ https://n8n.example.com/webhook/j2n_ai?act=translate
 - **라이선스 (License)**: MIT License
 - **제작자**: BoniK ([mail@bonik.me](mailto:mail@bonik.me) / [https://bonik.me](https://bonik.me))
 - **후원하기**: [Buy me a coffee](https://buymeacoffee.com/bonik)
+- **커스텀 및 제휴 문의**: 특별한 커스텀 서버 구축이나 전용 기능 개발이 필요하신 경우 이메일([mail@bonik.me](mailto:mail@bonik.me))로 문의해 주세요. (비용 문의 가능)

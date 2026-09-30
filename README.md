@@ -12,37 +12,8 @@ A Joplin plugin that sends note content to a webhook on n8n (or a custom server)
 
 > ℹ️ Due to local storage access restrictions in the Joplin mobile plugin, files cannot be inserted directly into notes on mobile.
 
-```mermaid
-graph TD
-    J["Joplin"]
-    PC["PC Plugin"]
-    M["Mobile Plugin"]
-    N8N["N8N"]
+![joplin2n8n-mermaid](https://raw.githubusercontent.com/bonik21/joplin_plugin_joplin2n8n/refs/heads/main/images/joplin2n8n-mermaid.png)
 
-    J <-->|"Text & Binary"| PC
-	J ~~~ PC
-    J -->|"Text & Binary"| M
-    M -.->|"Text Only<br>(❌Binary)"| J
-
-    PC <-->|"Text & Binary"| N8N
-    M <-->|"Text & Binary"| N8N
-
-    classDef joplin fill:#1681e4,stroke:#0d5bb0,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef pc fill:#8d5bc3,stroke:#4338ca,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef mobile fill:#c74fbc,stroke:#92400e,stroke-width:2px,color:#ffffff,rx:8,ry:8
-    classDef n8n fill:#e3496d,stroke:#a8283f,stroke-width:2px,color:#ffffff,rx:8,ry:8
-
-    class J joplin
-    class PC pc
-    class M mobile
-    class N8N n8n
-
-    linkStyle 0 stroke:#6366f1,stroke-width:6px 5
-    linkStyle 2 stroke:#d97706,stroke-width:6px 5
-    linkStyle 3 stroke:#d32f2f,stroke-width:5px 5,stroke-dasharray:8 5
-    linkStyle 4 stroke:#6366f1,stroke-width:6px 5
-    linkStyle 5 stroke:#d97706,stroke-width:6px 5
-```
 
 ## 📱 Supported Platforms
 - **PC** (Windows, Linux)
@@ -67,7 +38,7 @@ graph TD
 
 ### From the Plugin Store (Recommended)
 1. In Joplin, go to `Tools` → `Options` → `Plugins`.
-2. Search for `joplin2n8n`.
+2. Search for `joplin to n8n`or `joplin2n8n`.
 3. Click **Install** and restart Joplin.
 
 ### Manual Installation (from file)
@@ -206,3 +177,4 @@ https://n8n.example.com/webhook/j2n_ai?act=translate
 - **License**: MIT License
 - **Author**: BoniK ([mail@bonik.me](mailto:mail@bonik.me) / [https://bonik.me](https://bonik.me))
 - **Support**: [Buy me a coffee](https://buymeacoffee.com/bonik)
+- **Customization & Support**: Need a custom server setup or tailored features? Contact me via email ([mail@bonik.me](mailto:mail@bonik.me)) for inquiry and pricing.
