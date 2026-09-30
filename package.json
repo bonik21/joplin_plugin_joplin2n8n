@@ -5,9 +5,16 @@
     "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
     "prepare": "npm run dist",
     "updateVersion": "webpack --env joplin-plugin-config=updateVersion",
-    "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force"
+    "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force",
+    "publish-action": "node scripts/publish-action.js"
   },
   "license": "MIT",
+  "homepage": "https://bonik.me",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bonik21/joplin_plugin_joplin2n8n.git"
+  },
+  "author": "BoniK <mail@bonik.me> (https://bonik.me)",
   "keywords": [
     "joplin-plugin"
   ],
