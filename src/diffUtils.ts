@@ -24,6 +24,7 @@ export interface DiffHunk {
 export interface DiffSegment {
     type: 'equal' | 'hunk';
     lines?: string[];
+    equalLines?: DiffLine[];
     hunkId?: number;
 }
 
@@ -97,11 +98,15 @@ export function computeLineDiff(oldText: string, newText: string): DiffResult {
     let deletedCount = 0;
 
     let currentHunkLines: DiffLine[] = [];
-    let currentEqualLines: string[] = [];
+    let currentEqualLines: DiffLine[] = [];
 
     const flushEqual = () => {
         if (currentEqualLines.length > 0) {
-            allSegments.push({ type: 'equal', lines: [...currentEqualLines] });
+            allSegments.push({
+                type: 'equal',
+                lines: currentEqualLines.map(l => l.text),
+                equalLines: [...currentEqualLines],
+            });
             currentEqualLines = [];
         }
     };
@@ -142,7 +147,7 @@ export function computeLineDiff(oldText: string, newText: string): DiffResult {
     for (const d of rawDiff) {
         if (d.type === 'equal') {
             flushHunk();
-            currentEqualLines.push(d.text);
+            currentEqualLines.push(d);
         } else {
             flushEqual();
             currentHunkLines.push(d);

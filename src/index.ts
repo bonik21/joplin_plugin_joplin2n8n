@@ -439,7 +439,8 @@ async function executeWebhook(webhook: Webhook) {
                 if (dlgResult.id === 'compareDiff') {
                     const activeNote = await joplin.workspace.selectedNote();
                     if (activeNote && activeNote.id === note.id) {
-                        const diffResult = await openDiffDialog(activeNote.body || '', rawResponse);
+                        const originalText = isSelectedText ? bodyToProcess : (activeNote.body || '');
+                        const diffResult = await openDiffDialog(originalText, rawResponse, isSelectedText);
                         if (diffResult.action === 'applied') {
                             break;
                         }

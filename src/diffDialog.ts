@@ -17,7 +17,11 @@ function escapeHtml(str: string): string {
         .replace(/'/g, '&#039;');
 }
 
-export async function openDiffDialog(oldText: string, newText: string): Promise<DiffDialogResult> {
+export async function openDiffDialog(
+    oldText: string,
+    newText: string,
+    isSelectedText: boolean = false
+): Promise<DiffDialogResult> {
     const diffResult = computeLineDiff(oldText, newText);
 
     if (!diffDialogHandle) {
@@ -107,23 +111,31 @@ export async function openDiffDialog(oldText: string, newText: string): Promise<
                     finalText = reconstructText(diffResult, currentDecisions, 'rejected');
                 }
 
-                // 에디터 포커스 및 딜레이 부여 후 selectAll & replaceSelection
-                // (에디터 포커스 부재로 인해 기존 선택영역만 변경되는 현상 방지)
+                // 에디터 포커스 및 딜레이 부여 후 본문 교체
                 try {
                     await joplin.commands.execute('editor.focus');
                 } catch (e) {}
                 await new Promise(resolve => setTimeout(resolve, 60));
 
-                try {
-                    await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
-                } catch (e) {
-                    await joplin.commands.execute('selectAll');
-                }
+                if (isSelectedText) {
+                    // 선택 영역만 교체: 기존 선택영역을 바로 치환
+                    await joplin.commands.execute('editor.execCommand', {
+                        name: 'replaceSelection',
+                        args: [finalText],
+                    });
+                } else {
+                    // 전체 노트 교체: selectAll 후 replaceSelection
+                    try {
+                        await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
+                    } catch (e) {
+                        await joplin.commands.execute('selectAll');
+                    }
 
-                await joplin.commands.execute('editor.execCommand', {
-                    name: 'replaceSelection',
-                    args: [finalText],
-                });
+                    await joplin.commands.execute('editor.execCommand', {
+                        name: 'replaceSelection',
+                        args: [finalText],
+                    });
+                }
 
                 return { action: 'applied' };
 
