@@ -4,6 +4,7 @@ import { initI18n, _ } from './i18n';
 import { registerSettings, getWebhooks, Webhook } from './settings';
 import { openWebhookManager } from './managerDialog';
 import { openSendDialog } from './sendDialog';
+import { openDiffDialog } from './diffDialog';
 
 const registeredCommandIds = new Set<string>();
 let htmlDialogHandle = '';
@@ -374,87 +375,118 @@ async function executeWebhook(webhook: Webhook) {
                 displayHtml = `<pre style="white-space: pre-wrap; font-family: monospace;">${escapeHtml(rawResponse)}</pre>`;
             }
 
-            await joplin.views.dialogs.setButtons(htmlDialogHandle, [
-                { id: 'copyToClipboard', title: _('copyToClipboard') },
-                { id: 'insertCursor', title: _('insertAtCursor') },
-                { id: 'replaceNoteBody', title: _('replaceNoteBody') },
-                { id: 'ok', title: 'OK' },
-            ]);
-            const linkHandlerTranslations = JSON.stringify({
-                linkCopied: _('linkCopied'),
-                linkCopyFailed: _('linkCopyFailed'),
-                btnCopyTitle: _('copyToClipboard'),
-                btnInsertTitle: _('insertAtCursor'),
-                btnReplaceTitle: _('replaceNoteBody'),
-                tooltipCopyToClipboard: _('tooltipCopyToClipboard'),
-                tooltipInsertCursor: _('tooltipInsertCursor'),
-                tooltipReplaceNoteBody: _('tooltipReplaceNoteBody'),
-                tooltipOk: _('tooltipOk'),
-            }).replace(/"/g, '&quot;');
-            await joplin.views.dialogs.setHtml(htmlDialogHandle, `
-                <style>
-                    html, body {
-                        margin: 0;
-                        padding: 0;
-                        height: 100%;
-                        box-sizing: border-box;
-                        font-family: var(--joplin-font-family, sans-serif);
-                        font-size: var(--joplin-note-viewer-font-size, 15px);
-                        color: var(--joplin-color, #333);
-                    }
-                    #response-container {
-                        padding: 10px;
-                        user-select: text;
-                        overflow-y: auto;
-                        width: 100%;
-                        max-width: 100%;
-                        max-height: 95vh;
-                        box-sizing: border-box;
-                        word-break: break-word;
-                    }
-                    @media (min-width: 768px) {
-                        #response-container {
-                            min-width: 600px;
-                        }
-                    }
-                </style>
-                <input type="hidden" id="linkHandlerTranslations" value="${linkHandlerTranslations}">
-                <div id="response-container">${displayHtml}</div>
-            `);
-            const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
+            while (true) {
+                const dialogButtons = webhook.responseHandling === 'text'
+                    ? [
+                        { id: 'copyToClipboard', title: _('copyToClipboard') },
+                        { id: 'insertCursor', title: _('insertAtCursor') },
+                        { id: 'replaceNoteBody', title: _('replaceNoteBody') },
+                        { id: 'compareDiff', title: _('compareDiff') },
+                    ]
+                    : [
+                        { id: 'copyToClipboard', title: _('copyToClipboard') },
+                        { id: 'insertCursor', title: _('insertAtCursor') },
+                        { id: 'replaceNoteBody', title: _('replaceNoteBody') },
+                        { id: 'ok', title: 'OK' },
+                    ];
 
-            if (dlgResult.id === 'copyToClipboard') {
-                await joplin.clipboard.writeText(rawResponse);
-            } else if (dlgResult.id === 'insertCursor') {
-                const activeNote = await joplin.workspace.selectedNote();
-                if (activeNote && activeNote.id === note.id) {
-                    await joplin.commands.execute('editor.execCommand', {
-                        name: 'replaceSelection',
-                        args: [rawResponse],
-                    });
-                } else {
-                    await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
-                }
-            } else if (dlgResult.id === 'replaceNoteBody') {
-                const activeNote = await joplin.workspace.selectedNote();
-                if (activeNote && activeNote.id === note.id) {
-                    // Editor commands are used on both desktop and mobile.
-                    if (isSelectedText) {
+                await joplin.views.dialogs.setButtons(htmlDialogHandle, dialogButtons);
+                const linkHandlerTranslations = JSON.stringify({
+                    linkCopied: _('linkCopied'),
+                    linkCopyFailed: _('linkCopyFailed'),
+                    btnCopyTitle: _('copyToClipboard'),
+                    btnInsertTitle: _('insertAtCursor'),
+                    btnReplaceTitle: _('replaceNoteBody'),
+                    btnCompareDiffTitle: _('compareDiff'),
+                    tooltipCopyToClipboard: _('tooltipCopyToClipboard'),
+                    tooltipInsertCursor: _('tooltipInsertCursor'),
+                    tooltipReplaceNoteBody: _('tooltipReplaceNoteBody'),
+                    tooltipCompareDiff: _('tooltipCompareDiff'),
+                    tooltipOk: _('tooltipOk'),
+                }).replace(/"/g, '&quot;');
+                await joplin.views.dialogs.setHtml(htmlDialogHandle, `
+                    <style>
+                        html, body {
+                            margin: 0;
+                            padding: 0;
+                            height: 100%;
+                            box-sizing: border-box;
+                            font-family: var(--joplin-font-family, sans-serif);
+                            font-size: var(--joplin-note-viewer-font-size, 15px);
+                            color: var(--joplin-color, #333);
+                        }
+                        #response-container {
+                            padding: 10px;
+                            user-select: text;
+                            overflow-y: auto;
+                            width: 100%;
+                            max-width: 100%;
+                            max-height: 95vh;
+                            box-sizing: border-box;
+                            word-break: break-word;
+                        }
+                        @media (min-width: 768px) {
+                            #response-container {
+                                min-width: 600px;
+                            }
+                        }
+                    </style>
+                    <input type="hidden" id="linkHandlerTranslations" value="${linkHandlerTranslations}">
+                    <div id="response-container">${displayHtml}</div>
+                `);
+                const dlgResult = await joplin.views.dialogs.open(htmlDialogHandle);
+
+                if (dlgResult.id === 'compareDiff') {
+                    const activeNote = await joplin.workspace.selectedNote();
+                    if (activeNote && activeNote.id === note.id) {
+                        const diffResult = await openDiffDialog(activeNote.body || '', rawResponse);
+                        if (diffResult.action === 'applied') {
+                            break;
+                        }
+                        // 'cancelled'인 경우 다시 루프를 돌아 기존 TEXT/MD 다이얼로그 표시
+                        continue;
+                    } else {
+                        await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
+                        continue;
+                    }
+                } else if (dlgResult.id === 'copyToClipboard') {
+                    await joplin.clipboard.writeText(rawResponse);
+                    break;
+                } else if (dlgResult.id === 'insertCursor') {
+                    const activeNote = await joplin.workspace.selectedNote();
+                    if (activeNote && activeNote.id === note.id) {
                         await joplin.commands.execute('editor.execCommand', {
                             name: 'replaceSelection',
                             args: [rawResponse],
                         });
                     } else {
-                        await joplin.commands.execute('editor.execCommand', {
-                            name: 'selectAll',
-                        });
-                        await joplin.commands.execute('editor.execCommand', {
-                            name: 'replaceSelection',
-                            args: [rawResponse],
-                        });
+                        await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
                     }
+                    break;
+                } else if (dlgResult.id === 'replaceNoteBody') {
+                    const activeNote = await joplin.workspace.selectedNote();
+                    if (activeNote && activeNote.id === note.id) {
+                        // Editor commands are used on both desktop and mobile.
+                        if (isSelectedText) {
+                            await joplin.commands.execute('editor.execCommand', {
+                                name: 'replaceSelection',
+                                args: [rawResponse],
+                            });
+                        } else {
+                            await joplin.commands.execute('editor.execCommand', {
+                                name: 'selectAll',
+                            });
+                            await joplin.commands.execute('editor.execCommand', {
+                                name: 'replaceSelection',
+                                args: [rawResponse],
+                            });
+                        }
+                    } else {
+                        await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
+                    }
+                    break;
                 } else {
-                    await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
+                    break;
                 }
             }
 

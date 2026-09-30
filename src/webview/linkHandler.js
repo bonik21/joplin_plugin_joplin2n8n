@@ -1,3 +1,11 @@
+try {
+    const parentDoc = window.parent && window.parent.document;
+    if (parentDoc) {
+        const legacy = parentDoc.getElementById('joplin2n8n-diff-hide-btn-bar');
+        if (legacy) legacy.remove();
+    }
+} catch (e) {}
+
 function showWebviewToast(message, isError) {
     let toast = document.getElementById('joplin2n8n-toast');
     if (!toast) {
@@ -164,6 +172,7 @@ function applyButtonWrapStyle() {
         const copyTitle = (t.btnCopyTitle || '').trim();
         const insertTitle = (t.btnInsertTitle || '').trim();
         const replaceTitle = (t.btnReplaceTitle || '').trim();
+        const compareTitle = (t.btnCompareDiffTitle || '').trim();
 
         const buttons = parentDoc.querySelectorAll('.user-dialog-button-bar button');
         buttons.forEach(button => {
@@ -174,6 +183,8 @@ function applyButtonWrapStyle() {
                 button.setAttribute('title', t.tooltipInsertCursor || 'Insert response text at cursor position');
             } else if ((replaceTitle && text === replaceTitle) || text.includes('교체') || text.includes('Replace')) {
                 button.setAttribute('title', t.tooltipReplaceNoteBody || 'Replace the entire note with the response');
+            } else if ((compareTitle && text === compareTitle) || text.includes('비교') || text.includes('Compare') || text.includes('Comparer')) {
+                button.setAttribute('title', t.tooltipCompareDiff || 'Compare changes with the current note');
             } else if (text === 'OK' || text === 'ok') {
                 button.setAttribute('title', t.tooltipOk || 'Close the window');
             }

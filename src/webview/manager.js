@@ -1,4 +1,11 @@
 // Webview script for managing webhooks
+try {
+    const parentDoc = window.parent && window.parent.document;
+    if (parentDoc) {
+        const legacy = parentDoc.getElementById('joplin2n8n-diff-hide-btn-bar');
+        if (legacy) legacy.remove();
+    }
+} catch (e) {}
 
 let webhooks = [];
 let t = {};

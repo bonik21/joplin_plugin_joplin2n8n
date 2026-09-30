@@ -1,0 +1,367 @@
+/* GitHub & Antigravity IDE style Diff UI */
+
+:root {
+    --diff-bg: var(--joplin-background-color, #ffffff);
+    --diff-color: var(--joplin-color, #24292f);
+    --diff-border: var(--joplin-divider-color, #d0d7de);
+    --diff-header-bg: var(--joplin-background-color3, #f6f8fa);
+    
+    /* Insert/Add (Green) */
+    --diff-add-bg: rgba(46, 160, 67, 0.15);
+    --diff-add-text: #1a7f37;
+    --diff-add-border: #2da44e;
+    
+    /* Delete/Remove (Red) */
+    --diff-del-bg: rgba(248, 81, 73, 0.15);
+    --diff-del-text: #cf222e;
+    --diff-del-border: #cf222e;
+    
+    /* Modify (Blue/Purple) */
+    --diff-mod-badge: #0969da;
+    
+    /* Neutral */
+    --diff-badge-pending: #6e7781;
+    --diff-btn-bg: var(--joplin-background-color, #ffffff);
+    --diff-btn-border: var(--joplin-divider-color, #d0d7de);
+    --diff-btn-hover: var(--joplin-background-color-hover3, #f3f4f6);
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--diff-bg);
+    color: var(--diff-color);
+    font-family: var(--joplin-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif);
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.diff-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Sticky Header Toolbar */
+.diff-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--diff-header-bg);
+    border-bottom: 1px solid var(--diff-border);
+    padding: 10px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.diff-toolbar-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.diff-toolbar-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.diff-stats {
+    display: inline-flex;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.diff-stat-add {
+    color: var(--diff-add-text);
+    background: var(--diff-add-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.diff-stat-del {
+    color: var(--diff-del-text);
+    background: var(--diff-del-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.diff-stat-count {
+    color: var(--diff-badge-pending);
+    background: rgba(110, 119, 129, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Action Buttons */
+.diff-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diff-btn {
+    appearance: none;
+    border: 1px solid var(--diff-btn-border);
+    background: var(--diff-btn-bg);
+    color: var(--diff-color);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.diff-btn:hover {
+    background: var(--diff-btn-hover);
+    border-color: #8c959f;
+}
+
+.diff-btn.btn-primary {
+    background: #2da44e;
+    color: #ffffff;
+    border-color: rgba(27, 31, 36, 0.15);
+}
+
+.diff-btn.btn-primary:hover {
+    background: #2c974b;
+}
+
+.diff-btn.btn-secondary {
+    background: #f6f8fa;
+    border-color: #d0d7de;
+}
+
+.diff-btn.btn-secondary:hover {
+    background: #eaeef2;
+}
+
+.diff-btn.btn-danger-outline {
+    color: var(--diff-del-text);
+    border-color: rgba(207, 34, 46, 0.35);
+}
+
+.diff-btn.btn-danger-outline:hover {
+    background: var(--diff-del-bg);
+    border-color: var(--diff-del-border);
+}
+
+/* Scrollable Diff Content Area */
+.diff-content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.diff-empty-msg {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--diff-badge-pending);
+    font-size: 14px;
+}
+
+/* Hunk Cards */
+.diff-hunk-card {
+    border: 1px solid var(--diff-border);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    background: var(--diff-bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.diff-hunk-card.status-accepted {
+    border-color: var(--diff-add-border);
+    box-shadow: 0 0 0 1px var(--diff-add-border);
+}
+
+.diff-hunk-card.status-rejected {
+    border-color: var(--diff-border);
+    opacity: 0.75;
+}
+
+/* Hunk Header */
+.diff-hunk-header {
+    background: var(--diff-header-bg);
+    border-bottom: 1px solid var(--diff-border);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.diff-hunk-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.diff-badge {
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.diff-badge.badge-modify {
+    background: rgba(9, 105, 218, 0.15);
+    color: #0969da;
+}
+
+.diff-badge.badge-add {
+    background: var(--diff-add-bg);
+    color: var(--diff-add-text);
+}
+
+.diff-badge.badge-delete {
+    background: var(--diff-del-bg);
+    color: var(--diff-del-text);
+}
+
+.diff-badge-status {
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.diff-badge-status.status-pending {
+    background: rgba(110, 119, 129, 0.15);
+    color: var(--diff-badge-pending);
+}
+
+.diff-badge-status.status-accepted {
+    background: var(--diff-add-bg);
+    color: var(--diff-add-text);
+    font-weight: 600;
+}
+
+.diff-badge-status.status-rejected {
+    background: rgba(110, 119, 129, 0.2);
+    color: #57606a;
+    text-decoration: line-through;
+}
+
+.diff-hunk-lines-info {
+    color: var(--diff-badge-pending);
+    font-family: monospace;
+    font-size: 11px;
+}
+
+/* Hunk Individual Action Buttons */
+.diff-hunk-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.diff-hunk-btn {
+    appearance: none;
+    border: 1px solid var(--diff-btn-border);
+    background: var(--diff-btn-bg);
+    color: var(--diff-color);
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.diff-hunk-btn:hover {
+    background: var(--diff-btn-hover);
+}
+
+.diff-hunk-btn.btn-hunk-apply {
+    color: var(--diff-add-text);
+    border-color: rgba(46, 160, 67, 0.4);
+}
+
+.diff-hunk-btn.btn-hunk-apply:hover,
+.diff-hunk-card.status-accepted .diff-hunk-btn.btn-hunk-apply {
+    background: #2da44e;
+    color: #ffffff;
+    border-color: #2da44e;
+}
+
+.diff-hunk-btn.btn-hunk-discard {
+    color: var(--diff-del-text);
+    border-color: rgba(207, 34, 46, 0.4);
+}
+
+.diff-hunk-btn.btn-hunk-discard:hover,
+.diff-hunk-card.status-rejected .diff-hunk-btn.btn-hunk-discard {
+    background: #cf222e;
+    color: #ffffff;
+    border-color: #cf222e;
+}
+
+/* Hunk Lines Table / Body */
+.diff-lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 20px;
+}
+
+.diff-line-row {
+    display: flex;
+    width: 100%;
+}
+
+.diff-line-row.line-delete {
+    background-color: var(--diff-del-bg);
+    color: var(--diff-del-text);
+}
+
+.diff-line-row.line-insert {
+    background-color: var(--diff-add-bg);
+    color: var(--diff-add-text);
+}
+
+.diff-line-num {
+    width: 45px;
+    min-width: 45px;
+    text-align: right;
+    padding-right: 8px;
+    user-select: none;
+    color: var(--diff-badge-pending);
+    opacity: 0.7;
+    font-size: 11px;
+}
+
+.diff-line-marker {
+    width: 20px;
+    min-width: 20px;
+    text-align: center;
+    user-select: none;
+    font-weight: bold;
+}
+
+.diff-line-text {
+    flex: 1;
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding-right: 8px;
+}
