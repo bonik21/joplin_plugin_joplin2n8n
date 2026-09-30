@@ -29,8 +29,8 @@ function updateToolbarButtons() {
 
     const anyChosen = hasAnyDecisionMade();
     if (anyChosen) {
-        btnApply.textContent = t.diffApplyRest || '나머지 변경사항 적용 후 노트 본문 교체';
-        btnDiscard.textContent = t.diffDiscardRest || '나머지 변경사항 취소 후 노트 본문 교체';
+        btnApply.textContent = t.diffApplyRest || "나머지를 '적용'으로 선택";
+        btnDiscard.textContent = t.diffDiscardRest || "나머지를 '취소'로 선택";
     } else {
         btnApply.textContent = t.diffApplyAll || '전체 적용';
         btnDiscard.textContent = t.diffDiscardAll || '전체 취소';
@@ -90,104 +90,21 @@ function reconstruct(unresolvedFallback) {
     return resultLines.join('\n');
 }
 
-function getMyButtonBar() {
-    try {
-        const parentDoc = window.parent && window.parent.document;
-        if (!parentDoc) return null;
-
-        let myIframe = null;
-        if (window.frameElement) {
-            myIframe = window.frameElement;
-        } else {
-            const iframes = parentDoc.querySelectorAll('iframe');
-            for (const f of iframes) {
-                try {
-                    if (f.contentWindow === window) {
-                        myIframe = f;
-                        break;
-                    }
-                } catch (e) {}
-            }
-        }
-
-        if (myIframe) {
-            const container = myIframe.closest('.modal-dialog') || myIframe.closest('.modal-content') || myIframe.parentElement;
-            if (container) {
-                return container.querySelector('.user-dialog-button-bar');
-            }
-        }
-    } catch (e) {
-        console.warn('Could not locate button bar', e);
-    }
-    return null;
-}
-
-function removeLegacyHideStyle() {
-    try {
-        const parentDoc = window.parent && window.parent.document;
-        if (parentDoc) {
-            const legacy = parentDoc.getElementById('joplin2n8n-diff-hide-btn-bar');
-            if (legacy) legacy.remove();
-        }
-    } catch (e) {}
-}
-
-function hideDiffButtonBar() {
-    removeLegacyHideStyle();
-    const bar = getMyButtonBar();
-    if (bar) {
-        bar.style.display = 'none';
-    }
-}
-
-function restoreDiffButtonBar() {
-    removeLegacyHideStyle();
-    const bar = getMyButtonBar();
-    if (bar) {
-        bar.style.display = '';
-    }
-}
-
-function submitDiffResult(action, unresolvedFallback) {
-    const actionInput = getElement('diffAction');
+/**
+ * 변경 상태를 hidden input에 실시간 동기화
+ * (사용자가 하단 '노트 본문 교체' 버튼을 클릭했을 때 전달됨)
+ */
+function syncFormData() {
     const textInput = getElement('diffFinalText');
     const decisionsInput = getElement('diffDecisionsJson');
 
-    if (actionInput) actionInput.value = action;
-    if (decisionsInput) decisionsInput.value = JSON.stringify(decisions);
-
-    if (action === 'apply' || action === 'discard') {
-        const finalText = reconstruct(unresolvedFallback);
-        if (textInput) textInput.value = finalText;
+    if (decisionsInput) {
+        decisionsInput.value = JSON.stringify(decisions);
     }
-
-    // 부모 문서의 Joplin 버튼 클릭을 통해 다이얼로그 닫기
-    try {
-        const bar = getMyButtonBar();
-        if (bar) {
-            const btn = bar.querySelector('button');
-            if (btn) {
-                restoreDiffButtonBar();
-                btn.click();
-                return;
-            }
-        }
-        const parentDoc = window.parent && window.parent.document;
-        if (parentDoc) {
-            const btn = parentDoc.querySelector('.user-dialog-button-bar button');
-            if (btn) {
-                restoreDiffButtonBar();
-                btn.click();
-                return;
-            }
-        }
-    } catch (e) {
-        console.warn('Could not click parent button', e);
+    if (textInput) {
+        // 미선택된 항목은 기본적으로 'rejected'(기존 내용 유지)로 계산
+        textInput.value = reconstruct('rejected');
     }
-
-    restoreDiffButtonBar();
-    const form = getElement('diffForm');
-    if (form) form.submit();
 }
 
 function renderDiff() {
@@ -278,9 +195,6 @@ function renderDiff() {
                     <button type="button" class="diff-btn" id="btn-diff-reset">
                         ${escapeHtml(t.diffReset || '적용 초기화')}
                     </button>
-                    <button type="button" class="diff-btn btn-danger-outline" id="btn-diff-cancel">
-                        ${escapeHtml(t.diffCancel || '변경사항 비교 취소')}
-                    </button>
                 </div>
             </div>
             <div class="diff-content-scroll">
@@ -297,6 +211,7 @@ function renderDiff() {
             decisions[hunkId] = 'accepted';
             updateHunkCardUI(hunkId);
             updateToolbarButtons();
+            syncFormData();
         });
     });
 
@@ -307,26 +222,43 @@ function renderDiff() {
             decisions[hunkId] = 'rejected';
             updateHunkCardUI(hunkId);
             updateToolbarButtons();
+            syncFormData();
         });
     });
 
-    // 3. 상단 적용 버튼 (전체 적용 or 나머지 변경사항 적용 후 노트 본문 교체)
+    // 3. 상단 버튼: '전체 적용' / "나머지를 '적용'으로 선택" (선택만 변경)
     const btnApply = getElement('btn-diff-apply');
     if (btnApply) {
         btnApply.addEventListener('click', () => {
-            submitDiffResult('apply', 'accepted');
+            const anyChosen = hasAnyDecisionMade();
+            (diffResult.hunks || []).forEach(h => {
+                if (!anyChosen || decisions[h.id] === 'pending') {
+                    decisions[h.id] = 'accepted';
+                    updateHunkCardUI(h.id);
+                }
+            });
+            updateToolbarButtons();
+            syncFormData();
         });
     }
 
-    // 4. 상단 취소 버튼 (전체 취소 or 나머지 변경사항 취소 후 노트 본문 교체)
+    // 4. 상단 버튼: '전체 취소' / "나머지를 '취소'로 선택" (선택만 변경)
     const btnDiscard = getElement('btn-diff-discard');
     if (btnDiscard) {
         btnDiscard.addEventListener('click', () => {
-            submitDiffResult('discard', 'rejected');
+            const anyChosen = hasAnyDecisionMade();
+            (diffResult.hunks || []).forEach(h => {
+                if (!anyChosen || decisions[h.id] === 'pending') {
+                    decisions[h.id] = 'rejected';
+                    updateHunkCardUI(h.id);
+                }
+            });
+            updateToolbarButtons();
+            syncFormData();
         });
     }
 
-    // 5. 적용 초기화
+    // 5. 상단 버튼: '적용 초기화' (모든 선택항목을 미선택으로 되돌리기)
     const btnReset = getElement('btn-diff-reset');
     if (btnReset) {
         btnReset.addEventListener('click', () => {
@@ -335,19 +267,21 @@ function renderDiff() {
                 updateHunkCardUI(h.id);
             });
             updateToolbarButtons();
-        });
-    }
-
-    // 6. 변경사항 비교 취소
-    const btnCancel = getElement('btn-diff-cancel');
-    if (btnCancel) {
-        btnCancel.addEventListener('click', () => {
-            submitDiffResult('cancel', 'rejected');
+            syncFormData();
         });
     }
 }
 
 function init() {
+    // 잔존 숨김 스타일 제거 (방어 코드)
+    try {
+        const parentDoc = window.parent && window.parent.document;
+        if (parentDoc) {
+            const legacy = parentDoc.getElementById('joplin2n8n-diff-hide-btn-bar');
+            if (legacy) legacy.remove();
+        }
+    } catch (e) {}
+
     try {
         const diffDataEl = getElement('diffDataJson');
         if (diffDataEl && diffDataEl.value) {
@@ -367,12 +301,8 @@ function init() {
         });
     }
 
-    // 현재 다이얼로그의 버튼 바만 안전하게 숨김 (전역 style 주입 금지)
-    hideDiffButtonBar();
-    window.addEventListener('beforeunload', restoreDiffButtonBar);
-    window.addEventListener('unload', restoreDiffButtonBar);
-
     renderDiff();
+    syncFormData();
 }
 
 if (document.readyState === 'loading') {

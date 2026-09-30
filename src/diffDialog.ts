@@ -64,21 +64,21 @@ export async function openDiffDialog(oldText: string, newText: string): Promise<
 
     await joplin.views.dialogs.setHtml(diffDialogHandle, html);
     await joplin.views.dialogs.setButtons(diffDialogHandle, [
-        { id: 'diffSubmit', title: 'OK' }
+        { id: 'replaceNoteBody', title: _('replaceNoteBody') },
+        { id: 'diffCancel', title: _('diffCancel') }
     ]);
 
     const result = await joplin.views.dialogs.open(diffDialogHandle);
 
-    const formData = result.formData?.diffForm;
-    const action = formData?.diffAction;
-    let finalText = formData?.diffFinalText;
+    if (result.id === 'replaceNoteBody') {
+        const formData = result.formData?.diffForm;
+        let finalText = formData?.diffFinalText;
 
-    if (action === 'apply' || action === 'discard') {
-        // Fallback: 만약 웹뷰에서 finalText가 누락되었더라도 백엔드에서 decisionsJson 기반으로 재구성
+        // Fallback: decisionsJson 기반으로 안전하게 본문 재구성
         if (typeof finalText !== 'string' || finalText === '') {
             try {
                 const decisions = formData?.diffDecisionsJson ? JSON.parse(formData.diffDecisionsJson) : {};
-                finalText = reconstructText(diffResult, decisions, action === 'apply' ? 'accepted' : 'rejected');
+                finalText = reconstructText(diffResult, decisions, 'rejected');
             } catch (e) {
                 console.error('Failed to reconstruct fallback diff text', e);
             }
