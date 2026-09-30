@@ -176,5 +176,7 @@ https://n8n.example.com/webhook/j2n_ai?act=translate
 ## About
 - **License**: MIT License
 - **Author**: BoniK ([mail@bonik.me](mailto:mail@bonik.me) / [https://bonik.me](https://bonik.me))
+- **Repository**: [GitHub Repository](https://github.com/bonik21/joplin_plugin_joplin2n8n)
+- **Homepage**: [https://bonik.me](https://bonik.me/)
 - **Support**: [Buy me a coffee](https://buymeacoffee.com/bonik)
 - **Customization & Support**: Need a custom server setup or tailored features? Contact me via email ([mail@bonik.me](mailto:mail@bonik.me)) for inquiry and pricing.

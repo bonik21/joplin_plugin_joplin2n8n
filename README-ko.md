@@ -172,5 +172,7 @@ https://n8n.example.com/webhook/j2n_ai?act=translate
 ## 제작 정보
 - **라이선스 (License)**: MIT License
 - **제작자**: BoniK ([mail@bonik.me](mailto:mail@bonik.me) / [https://bonik.me](https://bonik.me))
+- **저장소**: [GitHub Repository](https://github.com/bonik21/joplin_plugin_joplin2n8n)
+- **홈페이지**: [https://bonik.me](https://bonik.me/)
 - **후원하기**: [Buy me a coffee](https://buymeacoffee.com/bonik)
 - **커스텀 및 제휴 문의**: 특별한 커스텀 서버 구축이나 전용 기능 개발이 필요하신 경우 이메일([mail@bonik.me](mailto:mail@bonik.me))로 문의해 주세요. (비용 문의 가능)
