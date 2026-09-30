@@ -125,5 +125,6 @@
   "diffModify": "Modification",
   "diffAdd": "Ajout",
   "diffDelete": "Suppression",
-  "diffHunksUnit": "modifications"
+  "diffHunksUnit": "modifications",
+  "diffHasPendingItems": "Il y a des éléments non sélectionnés."
 }

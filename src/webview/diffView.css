@@ -183,17 +183,16 @@ html, body {
     margin-bottom: 16px;
     overflow: hidden;
     background: var(--diff-bg);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
 }
 
+/* Card border itself stays neutral */
 .diff-hunk-card.status-accepted {
-    border-color: var(--diff-add-border);
-    box-shadow: 0 0 0 1px var(--diff-add-border);
+    border-color: var(--diff-border);
 }
 
 .diff-hunk-card.status-rejected {
     border-color: var(--diff-border);
-    opacity: 0.75;
 }
 
 /* Hunk Header */
@@ -257,9 +256,9 @@ html, body {
 }
 
 .diff-badge-status.status-rejected {
-    background: rgba(110, 119, 129, 0.2);
-    color: #57606a;
-    text-decoration: line-through;
+    background: var(--diff-del-bg);
+    color: var(--diff-del-text);
+    font-weight: 600;
 }
 
 .diff-hunk-lines-info {
@@ -316,6 +315,73 @@ html, body {
     border-color: #cf222e;
 }
 
+/* Hunk Body & Sections (Before vs After) */
+.diff-hunk-body {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.diff-section {
+    border: 2px solid transparent;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.diff-section-label {
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    user-select: none;
+}
+
+.diff-section-before .diff-section-label {
+    color: var(--diff-del-text);
+    background: rgba(248, 81, 73, 0.08);
+}
+
+.diff-section-after .diff-section-label {
+    color: var(--diff-add-text);
+    background: rgba(46, 160, 67, 0.08);
+}
+
+/* Pending 상태: 은은한 배경, 본문 텍스트 색 */
+.diff-hunk-card.status-pending .diff-section-before {
+    background-color: var(--diff-del-bg);
+}
+.diff-hunk-card.status-pending .diff-section-after {
+    background-color: var(--diff-add-bg);
+}
+
+/* '적용' 선택 시: 수정 후 영역에 녹색 border라인 + 선명한 배경, 수정 전 영역 흐리게/어둡게 */
+.diff-hunk-card.status-accepted .diff-section-after {
+    border: 2px solid #2da44e;
+    background-color: rgba(46, 160, 67, 0.22);
+    box-shadow: 0 0 0 1px rgba(45, 164, 78, 0.2);
+    opacity: 1;
+}
+.diff-hunk-card.status-accepted .diff-section-before {
+    opacity: 0.35;
+    background-color: rgba(248, 81, 73, 0.06);
+    border: 2px solid transparent;
+}
+
+/* '취소' 선택 시: 수정 전 영역에 적색 border라인 + 선명한 배경, 수정 후 영역 흐리게/어둡게 */
+.diff-hunk-card.status-rejected .diff-section-before {
+    border: 2px solid #cf222e;
+    background-color: rgba(248, 81, 73, 0.22);
+    box-shadow: 0 0 0 1px rgba(207, 34, 46, 0.2);
+    opacity: 1;
+}
+.diff-hunk-card.status-rejected .diff-section-after {
+    opacity: 0.35;
+    background-color: rgba(46, 160, 67, 0.06);
+    border: 2px solid transparent;
+}
+
 /* Hunk Lines Table / Body */
 .diff-lines-table {
     width: 100%;
@@ -328,16 +394,16 @@ html, body {
 .diff-line-row {
     display: flex;
     width: 100%;
+    transition: background-color 0.15s ease;
 }
 
-.diff-line-row.line-delete {
-    background-color: var(--diff-del-bg);
-    color: var(--diff-del-text);
-}
-
-.diff-line-row.line-insert {
-    background-color: var(--diff-add-bg);
-    color: var(--diff-add-text);
+/* 텍스트는 원래 본문 색 사용 */
+.diff-line-text {
+    flex: 1;
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding-right: 8px;
+    color: var(--diff-color);
 }
 
 .diff-line-num {
@@ -359,9 +425,61 @@ html, body {
     font-weight: bold;
 }
 
-.diff-line-text {
-    flex: 1;
-    white-space: pre-wrap;
-    word-break: break-all;
-    padding-right: 8px;
+.diff-line-row.line-delete .diff-line-marker {
+    color: var(--diff-del-text);
+}
+
+.diff-line-row.line-insert .diff-line-marker {
+    color: var(--diff-add-text);
+}
+
+/* Toast Notification */
+#joplin2n8n-diff-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translate(-50%, 15px);
+    padding: 12px 26px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: var(--joplin-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+    font-size: 13.5px;
+    font-weight: 600;
+    z-index: 999999;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    display: none;
+}
+
+#joplin2n8n-diff-toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+#joplin2n8n-diff-toast.diff-toast-error {
+    background-color: #cf222e;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#joplin2n8n-diff-toast.diff-toast-success {
+    background-color: #2da44e;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes hunkPendingPulse {
+    0% {
+        box-shadow: 0 0 0 3px rgba(207, 34, 46, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 5px rgba(207, 34, 46, 0.35);
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+.diff-hunk-card.hunk-pending-pulse {
+    animation: hunkPendingPulse 1s ease-out;
 }

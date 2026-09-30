@@ -125,5 +125,6 @@
   "diffModify": "수정",
   "diffAdd": "추가",
   "diffDelete": "삭제",
-  "diffHunksUnit": "변경사항"
+  "diffHunksUnit": "변경사항",
+  "diffHasPendingItems": "선택하지 않은 항목이 있습니다."
 }

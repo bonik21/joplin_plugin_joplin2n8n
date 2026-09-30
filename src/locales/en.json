@@ -125,5 +125,6 @@
   "diffModify": "Modify",
   "diffAdd": "Add",
   "diffDelete": "Delete",
-  "diffHunksUnit": "changes"
+  "diffHunksUnit": "changes",
+  "diffHasPendingItems": "There are unselected items."
 }
