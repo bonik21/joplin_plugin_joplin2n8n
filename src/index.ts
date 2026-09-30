@@ -428,34 +428,30 @@ async function executeWebhook(webhook: Webhook) {
             } else if (dlgResult.id === 'insertCursor') {
                 const activeNote = await joplin.workspace.selectedNote();
                 if (activeNote && activeNote.id === note.id) {
-                    const versionInfo = await joplin.versionInfo();
-                    if (versionInfo.platform === 'desktop') {
-                        await joplin.commands.execute('replaceSelection', rawResponse);
-                    } else {
-                        await joplin.views.dialogs.showMessageBox(_('errorMobileReplaceUnsupported'));
-                    }
+                    await joplin.commands.execute('editor.execCommand', {
+                        name: 'replaceSelection',
+                        args: [rawResponse],
+                    });
                 } else {
                     await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
                 }
             } else if (dlgResult.id === 'replaceNoteBody') {
                 const activeNote = await joplin.workspace.selectedNote();
                 if (activeNote && activeNote.id === note.id) {
-                    const versionInfo = await joplin.versionInfo();
-                    if (versionInfo.platform === 'desktop') {
-                        // Desktop: use editor command so Ctrl+Z (undo) works
-                        if (isSelectedText) {
-                            await joplin.commands.execute('replaceSelection', rawResponse);
-                        } else {
-                            await joplin.commands.execute('editor.execCommand', { name: 'selectAll' });
-                            await joplin.commands.execute('replaceSelection', rawResponse);
-                        }
+                    // Editor commands are used on both desktop and mobile.
+                    if (isSelectedText) {
+                        await joplin.commands.execute('editor.execCommand', {
+                            name: 'replaceSelection',
+                            args: [rawResponse],
+                        });
                     } else {
-                        // Mobile: editor commands not supported, write directly to DB
-                        if (isSelectedText) {
-                            await joplin.views.dialogs.showMessageBox(_('errorMobileReplaceUnsupported'));
-                        } else {
-                            await joplin.data.put(['notes', note.id], null, { body: rawResponse });
-                        }
+                        await joplin.commands.execute('editor.execCommand', {
+                            name: 'selectAll',
+                        });
+                        await joplin.commands.execute('editor.execCommand', {
+                            name: 'replaceSelection',
+                            args: [rawResponse],
+                        });
                     }
                 } else {
                     await joplin.views.dialogs.showMessageBox(_('errorNoteMismatch'));
@@ -653,7 +649,10 @@ async function executeWebhook(webhook: Webhook) {
 
                 // 5. Insert into note
                 if (dlgResult.id === 'insertCursor') {
-                    await joplin.commands.execute('replaceSelection', '\n' + mdLink + '\n');
+                    await joplin.commands.execute('editor.execCommand', {
+                        name: 'replaceSelection',
+                        args: ['\n' + mdLink + '\n'],
+                    });
                 } else {
                     const currentNote = await joplin.workspace.selectedNote();
                     if (currentNote && currentNote.id === note.id) {
